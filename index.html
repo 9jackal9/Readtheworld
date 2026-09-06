@@ -1,0 +1,1301 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 대구일중학교 자유학기 국어 탐구 대시보드</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Noto Sans KR) -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <style>
+        body { font-family: 'Noto Sans KR', sans-serif; }
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+        }
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Print Media Styles for PDF / Worksheet Export */
+        @media print {
+            header, section, footer, .no-print, .stage-filter, .sidebar-area {
+                display: none !important;
+            }
+            body {
+                background: white !important;
+                color: black !important;
+                padding: 0 !important;
+                margin: 0 !important;
+                font-family: 'Noto Sans KR', sans-serif !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+            }
+            .printable-worksheet {
+                display: block !important;
+                width: 100% !important;
+                max-width: 100% !important;
+                box-shadow: none !important;
+                border: none !important;
+                padding: 0 !important;
+            }
+            .page-break {
+                page-break-before: always;
+            }
+            /* 인쇄 시 텍스트 입력창 잘림 방지 및 최적화 */
+            textarea {
+                resize: none !important;
+                overflow: hidden !important;
+                background: transparent !important;
+                color: #0f172a !important;
+            }
+            /* 기본 텍스트 상자에만 테두리 적용, 표 안의 텍스트 상자는 제외 */
+            .textarea-default {
+                border: 1px solid #94a3b8 !important;
+            }
+            .table-textarea {
+                border: none !important;
+            }
+        }
+    </style>
+
+    <script>
+        function appData() {
+            return {
+                currentView: 'dashboard', // 기본값: 첫 화면(대시보드)
+                currentStage: 'ALL',
+                searchQuery: '',
+                completedIds: [],
+                dDayText: 'D-DAY 계산중',
+                modals: { tool: false },
+                activeToolInfo: { name: '', desc: '', prompt: '', caution: '' },
+
+                // 34개 차시별 인성 명언 및 출처 데이터베이스
+                quoteIndex: 0,
+                quotes: [
+                    { session: 1, text: "말이 없으면 세상도 없다.", source: "김수영, 《시여, 침묵을 깼어라》", context: "언어와 글쓰기가 우리 세상과 공동체를 구성하는 출발점임을 이해하기" },
+                    { session: 2, text: "글을 쓴다는 것은 자신의 마음을 비추는 거울이자, 타인의 마음을 향해 다리를 놓는 일이다.", source: "이태준, 《문장강화》", context: "내면 성찰과 공동체 연결로서의 진정성 있는 글쓰기" },
+                    { session: 3, text: "사람은 말을 만들고, 말은 마음을 만들고, 마음은 세상을 만든다.", source: "신영복, 《처음처럼》", context: "바른 언어와 배려하는 표현으로 건강한 사회적 관계 형성하기" },
+                    { session: 4, text: "혼자 가면 빠르게 가지만, 함께 가면 멀리 간다.", source: "아프리카 속담", context: "모둠 탐구 활동 시 협업과 연대의 가치" },
+                    { session: 5, text: "배우기만 하고 생각하지 않으면 얻는 것이 없고, 생각만 하고 배우지 않으면 위태롭다.", source: "공자, 《논어》 위정편", context: "비판적 문해력과 주도적인 정보 수집의 자세" },
+                    { session: 6, text: "질문은 지혜의 시작이며, 바른 질문이 바른 답을 이끈다.", source: "소크라테스", context: "탐구의 깊이를 더하는 핵심 질문 생성의 중요성" },
+                    { session: 7, text: "백지장도 맞들면 낫다.", source: "한국 속담", context: "작은 역할이라도 힘을 모아 모둠 과제를 완수하는 협동심" },
+                    { session: 8, text: "정직은 지혜의 책에서 첫 번째 장이다.", source: "토머스 제퍼슨", context: "출처를 명확히 밝히고 올바른 정보를 탐색하는 정직성" },
+                    { session: 9, text: "기술은 훌륭한 하인이 될 수 있지만, 위험한 주인이 될 수도 있다.", source: "알베르트 아인슈타인", context: "AI 디지털 도구를 주도적이고 윤리적으로 활용하는 태도" },
+                    { session: 10, text: "진실은 홀로 서 있을 수 있지만, 거짓은 언제나 다른 거짓의 도움을 필요로 한다.", source: "마하트마 간디", context: "AI 환각 현상 예방 및 사실 확인(Fact-check)의 습관화" },
+                    { session: 11, text: "타인의 신발을 신고 1마일을 걸어보기 전까지는 그 사람을 판단하지 말라.", source: "아메리카 원주민 속담", context: "타인의 관점을 이해하고 사회적 문제에 공감하기" },
+                    { session: 12, text: "우리가 수집하는 정보의 질이 우리의 생각의 질을 결정한다.", source: "존 듀이, 《민주주의와 교육》", context: "신뢰할 수 있는 수집 자료의 객관성 및 가치 평가" },
+                    { session: 13, text: "구슬이 서 말이라도 꿰어야 보배다.", source: "한국 속담", context: "수집한 정보를 체계적으로 분류하고 논리적으로 구조화하기" },
+                    { session: 14, text: "듣는 법을 배우면 나쁜 말을 하는 사람에게서도 이익을 얻을 수 있다.", source: "플루타르코스", context: "동료의 다양한 의견을 경청하고 포용하는 수용 태도" },
+                    { session: 15, text: "모든 인용은 또 다른 생각으로 이어지는 다리이다.", source: "미셸 드 몽테뉴, 《수상록》", context: "올바른 인용 법과 저작권 준수 등 연구 윤리 확립" },
+                    { session: 16, text: "문제를 깊이 이해하는 것이 올바른 해결책의 절반이다.", source: "찰스 케터링", context: "사회 현상 문제의 근본 원인을 다각도로 깊이 있게 분석하기" },
+                    { session: 17, text: "세상을 바꾸고 싶다면 먼저 나 자신과 우리 주변부터 관찰하라.", source: "소포클레스", context: "우리 주변과 공동체의 작은 문제에 관심을 갖는 비판적 시선" },
+                    { session: 18, text: "혼자서 꿈을 꾸면 한낱 꿈에 불과하지만, 함께 꿈을 꾸면 그것은 현실이 된다.", source: "체 게바라", context: "모둠원과 함께 공동체의 문제를 해결하려는 적극적인 실천 의지" },
+                    { session: 19, text: "비판은 쉬우나 대안을 제시하기는 어렵다.", source: "도산 안창호", context: "단순한 불평을 넘어 현실적이고 공동체 친화적인 대안 도출하기" },
+                    { session: 20, text: "시작이 반이다.", source: "한국 속담", context: "두려움 없이 논리적인 글쓰기의 개요와 목차 기획하기" },
+                    { session: 21, text: "생각을 문장으로 옮기는 것은 안개를 다듬어 돌을 만드는 것과 같다.", source: "박완서", context: "자신의 아이디어를 명확한 문장과 글로 표현하는 정성" },
+                    { session: 22, text: "글은 쓰면 쓸수록 다듬어지고, 다듬을수록 빛이 난다.", source: "이육사", context: "서론-본론-결론의 구성을 갖추어 차근차근 써나가는 정진" },
+                    { session: 23, text: "천 리 길도 한 걸음부터.", source: "노자, 《도덕경》", context: "지속적인 노력을 통해 초안을 완성해가는 끈기" },
+                    { session: 24, text: "남의 글을 고쳐주는 것은 그 사람의 생각을 다듬어주는 고귀한 선물이다.", source: "버지니아 울프", context: "AI 감수 도구 및 동료와 함께 문장을 다듬는 협력적 자세" },
+                    { session: 25, text: "비판을 겸허히 받아들이는 사람은 스스로를 발전시키는 지혜로운 사람이다.", source: "맹자, 《맹자》", context: "동료 및 교사의 피드백을 기꺼이 수용하여 글을 보완하기" },
+                    { session: 26, text: "경청은 설득의 가장 강력한 무기이다.", source: "데일 카네기, 《인간관계론》", context: "동료의 수정 제안에 귀를 기울이고 인내하는 소통 능력" },
+                    { session: 27, text: "그림 하나가 천 마디 말보다 가치 있다.", source: "프레드 R. 바나", context: "주제를 가독성 높게 전달하는 시각자료 제작의 중요성" },
+                    { session: 28, text: "단순함이 최고의 정교함이다.", source: "레오나르도 다 빈치", context: "청중의 눈높이에 맞는 깔끔하고 간결한 슬라이드 구성" },
+                    { session: 29, text: "연습은 완벽을 만들고, 준비는 자신감을 낳는다.", source: "마이클 조던", context: "발표 리허설을 통해 전달력과 모둠 협동심 높이기" },
+                    { session: 30, text: "말은 마음의 소리요, 행동은 마음의 자국이다.", source: "조지 허버트", context: "발표 시 진정성과 정중한 태도를 갖추어 전달하기" },
+                    { session: 31, text: "진정한 소통은 상대방의 마음에 울림을 주는 것이다.", source: "마틴 루터 킹", context: "질의응답 과정에서 청중과 인격적으로 교감하기" },
+                    { session: 32, text: "타인의 성과에 진심으로 박수를 보낼 줄 아는 자가 진정한 승자이다.", source: "랄프 월도 에머슨", context: "동료의 탐구 발표를 경청하고 격려하는 아름다운 품격" },
+                    { session: 33, text: "지혜의 가장 큰 열매는 지나온 길을 돌아보는 성찰이다.", source: "소크라테스", context: "한 학기 동안의 탐구 과정 전체를 돌아보며 배움을 정리하기" },
+                    { session: 34, text: "우리가 오늘 심은 씨앗은 내일의 풍성한 숲이 된다.", source: "윤동주", context: "러닝페어 성과 전시를 통해 공동체와의 연결을 마음에 새기기" }
+                ],
+
+                get currentQuote() {
+                    return this.quotes[this.quoteIndex];
+                },
+
+                nextQuote() {
+                    this.quoteIndex = (this.quoteIndex + 1) % this.quotes.length;
+                },
+
+                prevQuote() {
+                    this.quoteIndex = (this.quoteIndex - 1 + this.quotes.length) % this.quotes.length;
+                },
+
+                // 수업 모드 상태 관리
+                activeSessionId: 1,
+                lessonTab: 'explanation', // 'explanation', 'caution', 'activity', 'worksheet'
+                studentInfo: {
+                    gradeClass: '',
+                    number: '',
+                    name: '',
+                    date: ''
+                },
+
+                stages: [
+                    { id: '① 탐구', name: '① 탐구', icon: 'fa-solid fa-magnifying-glass', activeBg: 'bg-blue-600' },
+                    { id: '② 계획', name: '② 계획', icon: 'fa-solid fa-pen-ruler', activeBg: 'bg-emerald-600' },
+                    { id: '③ 실행', name: '③ 실행', icon: 'fa-solid fa-gears', activeBg: 'bg-amber-600' },
+                    { id: '④ 공유·성찰', name: '④ 공유·성찰', icon: 'fa-solid fa-comments', activeBg: 'bg-purple-600' }
+                ],
+
+                sessions: [
+                    { id: 1, stage: '① 탐구', period: '1-2차시', month: '8월 4주', sessionNum: '1-2차시', title: '오리엔테이션 및 모둠 편성', content: '세상 읽기의 의미 이해, 탐구를 함께할 팀 구성 및 역할 분담', tools: ['없음'], note: '' },
+                    { id: 2, stage: '① 탐구', period: '3-4차시', month: '9월 1주', sessionNum: '3-4차시', title: '관심 사회 문제 탐색 및 브레인스토밍', content: '포털 검색 및 마인드맵을 통한 다양한 사회 현상 탐색 및 브레인스토밍', tools: ['인터넷 검색'], note: '주제 탐색' },
+                    { id: 3, stage: '① 탐구', period: '5-6차시', month: '9월 2주', sessionNum: '5-6차시', title: '탐구 주제 확정 및 질문 구체화', content: '모둠별 최종 탐구 주제 확정 및 탐구를 이끌어갈 핵심 질문 작성', tools: ['없음'], note: '주제 확정' },
+                    { id: 4, stage: '① 탐구', period: '7-8차시', month: '9월 3주', sessionNum: '7-8차시', title: '올바른 정보 탐색법과 신뢰도 평가', content: '효과적인 검색 키워드 작성법 및 가짜 뉴스를 판별하는 출처 검증', tools: ['구글', '뉴스포털'], note: '출처 평가' },
+                    
+                    { id: 5, stage: '② 계획', period: '9-10차시', month: '9월 4주', sessionNum: '9-10차시', title: '생성형 AI 도구 이해 및 실습', content: 'ChatGPT, Gemini 등 생성형 AI의 특성 이해 및 기본 프롬프트 실습', tools: ['ChatGPT', 'Gemini', 'Perplexity'], note: 'AI 도구 소개' },
+                    { id: 6, stage: '② 계획', period: '11-12차시', month: '9월 5주', sessionNum: '11-12차시', title: 'AI 활용 심층 자료 수집 및 팩트체크', content: 'AI 프롬프트를 활용하여 주제 관련 데이터 수집 및 교차 검증', tools: ['Gemini', 'Perplexity'], note: 'AI 탐색 실습' },
+                    { id: 7, stage: '② 계획', period: '13-14차시', month: '10월 1주', sessionNum: '13-14차시', title: '수집 자료 구조화 및 올바른 인용법', content: '수집한 정보를 논리적으로 분류하고, 저작권 준수를 위한 출처 표기법 학습', tools: ['구글문서', '워드'], note: '자료 정리' },
+
+                    { id: 8, stage: '③ 실행', period: '15-16차시', month: '10월 2주', sessionNum: '15-16차시', title: '주장·설명하는 글의 논리적 구조 익히기', content: '본격적인 글쓰기에 앞서 서론-본론-결론의 뼈대와 타당한 근거 제시 방법 학습', tools: ['없음'], note: '글쓰기 기초' },
+                    { id: 9, stage: '③ 실행', period: '17-18차시', month: '10월 3주', sessionNum: '17-18차시', title: '문제 원인 분석 및 실천적 대안 탐색', content: '마인드맵으로 사회 문제의 근본 원인을 분석하고 공동체 맞춤형 해결책 토의', tools: ['Mindmap 도구', '인터넷'], note: '원인/해결책' },
+                    { id: 10, stage: '③ 실행', period: '19-20차시', month: '10월 4주', sessionNum: '19-20차시', title: '논리적 글쓰기 개요안(스토리라인) 짜기', content: '탐구한 내용을 바탕으로 보고서의 목차를 구성하고 문단별 중심 내용 배치', tools: ['문서도구'], note: '개요 기획' },
+                    { id: 11, stage: '③ 실행', period: '21-22차시', month: '11월 1주', sessionNum: '21-22차시', title: '탐구 보고서 초안 작성 ① (서론/본론)', content: '기획한 개요안을 바탕으로 문제 제기(서론)와 근거 분석(본론) 내용 작성', tools: ['구글문서'], note: '초안 작성' },
+                    { id: 12, stage: '③ 실행', period: '23-24차시', month: '11월 2주', sessionNum: '23-24차시', title: '탐구 보고서 초안 작성 ② 및 AI 감수', content: '대안 및 요약(결론)을 완성하고, AI를 활용하여 어휘, 맞춤법, 문맥 교정', tools: ['ChatGPT'], note: '초안 및 AI감수' },
+                    { id: 13, stage: '③ 실행', period: '25-26차시', month: '11월 3주', sessionNum: '25-26차시', title: '동료 교차 평가(Peer Review) 및 퇴고', content: '다른 모둠과 글을 교환하여 읽고 피드백을 주고받으며 글을 최종 수정·보완', tools: ['구글문서'], note: '상호 평가' },
+                    { id: 14, stage: '③ 실행', period: '27-28차시', month: '11월 4주', sessionNum: '27-28차시', title: '시각 자료 기획 및 스토리보드 작성', content: '보고서의 핵심 내용을 시각화(인포그래픽)하기 위한 슬라이드 구성안 스케치', tools: ['종이', '색연필'], note: '발표 기획' },
+
+                    { id: 15, stage: '④ 공유·성찰', period: '29-30차시', month: '12월 1주', sessionNum: '29-30차시', title: 'Canva 활용 발표 슬라이드 최종 제작', content: '스토리보드를 바탕으로 디지털 디자인 도구를 활용해 청중을 설득할 슬라이드 제작', tools: ['Canva', 'PPT'], note: '슬라이드 제작' },
+                    { id: 16, stage: '④ 공유·성찰', period: '31-32차시', month: '12월 2주', sessionNum: '31-32차시', title: '모둠별 탐구 발표 및 청중 질의응답', content: '모둠별 성과를 학급 전체에 발표하고, 상호 질의응답을 통한 비판적 사고 훈련', tools: ['발표 도구'], note: '팀별 발표' },
+                    { id: 17, stage: '④ 공유·성찰', period: '33-34차시', month: '12월 3주', sessionNum: '33-34차시', title: '한 학기 탐구 성찰 및 러닝페어 준비', content: '자유학기 탐구 과정 전체를 성찰하는 일지 작성 및 러닝페어 전시 공간 꾸미기', tools: ['설문 도구'], note: '러닝페어 연계' }
+                ],
+
+                toolDatabase: {
+                    'ChatGPT': { name: 'ChatGPT', desc: '자연어 대화를 통해 아이디어를 브레인스토밍하고 문장을 교정해 주는 AI 도구입니다.', prompt: '나는 중학교 1학년이야. [주제]에 대해 주장하는 글을 쓰려고 하는데, 개요를 3가지로 짜줄래?', caution: 'AI가 제공한 정보를 맹신하지 말고 포털 검색으로 사실 여부를 교차 검증하세요.' },
+                    'Gemini': { name: 'Gemini', desc: '구글 검색과 실시간 연동되어 최신 정보와 사회 트렌드를 파악하는 데 유리한 AI 도구입니다.', prompt: '최근 한국에서 발생한 [사회현상]에 대한 최신 기사 요약과 주요 쟁점을 알려줘.', caution: '출처가 명확한지 원문 기사나 공공기관 링크를 확인하세요.' },
+                    'Perplexity': { name: 'Perplexity', desc: '답변과 함께 신뢰할 수 있는 출처(웹사이트, 뉴스 등)를 명확히 제시해 주는 인용 검색 도구입니다.', prompt: '[사회문제]의 원인을 분석한 신뢰할 수 있는 통계나 공공 연구 자료를 찾아줘.', caution: '제공된 출처 링크를 직접 클릭하여 원문 맥락을 확인하세요.' },
+                    'Canva': { name: 'Canva', desc: '다양한 템플릿을 활용하여 시각적인 발표 자료(PPT, 카드뉴스)를 제작할 수 있는 디자인 도구입니다.', prompt: '적절한 템플릿 검색: "교육", "발표", "인포그래픽"', caution: '저작권이 없는 무료 소스를 활용하고, 너무 많은 글씨보다 시각화에 집중하세요.' }
+                },
+
+                get activeSession() {
+                    return this.sessions.find(s => s.id === this.activeSessionId) || this.sessions[0];
+                },
+
+                get filteredSessions() {
+                    return this.sessions.filter(session => {
+                        const matchStage = this.currentStage === 'ALL' || session.stage === this.currentStage;
+                        const matchSearch = this.searchQuery === '' || 
+                                            session.title.toLowerCase().includes(this.searchQuery.toLowerCase()) ||
+                                            session.content.toLowerCase().includes(this.searchQuery.toLowerCase());
+                        return matchStage && matchSearch;
+                    });
+                },
+
+                initData() {
+                    // D-Day 계산 (2026년 12월 4주차 월요일 12월 21일 기준)
+                    const targetDate = new Date('2026-12-21T00:00:00');
+                    const today = new Date();
+                    today.setHours(0, 0, 0, 0);
+                    const diffTime = targetDate - today;
+                    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+                    this.dDayText = diffDays > 0 ? `D-${diffDays}` : (diffDays === 0 ? 'D-Day' : `D+${Math.abs(diffDays)}`);
+                },
+
+                // 80분 블록타임 맞춤형 상세 수업 데이터베이스
+                lessonDetails: {
+                    1: {
+                        explanation: {
+                            target: "우리 주변의 다양한 사회 현상을 관찰하고 문해력 기반의 '세상 읽기' 의미를 파악한다. 나아가 한 학기 동안 진행될 공동체 연결 글쓰기 프로젝트의 목표와 로드맵을 이해하고 팀 빌딩을 완료한다.",
+                            concept: `<p class="mb-3">'읽기'는 단순히 글자를 소리 내어 읽는 것을 넘어, 주어진 텍스트와 상황의 숨은 맥락을 파악하고 비판적으로 해석하는 <strong>'문해력(Literacy)'</strong>을 의미합니다.</p>
+                                      <p class="mb-5">'세상 읽기'란 뉴스, 미디어, 공동체의 갈등 등 우리를 둘러싼 현상을 깊이 있게 이해하고 공감하는 과정입니다.</p>
+                                      
+                                      <div class="flex flex-col sm:flex-row items-center gap-3 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+                                          <div class="flex-1 text-center w-full p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                              <i class="fa-solid fa-font text-2xl text-indigo-400 mb-2 block"></i>
+                                              <span class="font-bold text-xs text-slate-800">문자 읽기</span><br>
+                                              <span class="text-[10px] text-slate-500">글자의 표면적 의미</span>
+                                          </div>
+                                          <i class="fa-solid fa-arrow-right text-indigo-300 hidden sm:block"></i>
+                                          <i class="fa-solid fa-arrow-down text-indigo-300 block sm:hidden"></i>
+                                          <div class="flex-1 text-center w-full p-4 bg-slate-50 rounded-lg border border-slate-100">
+                                              <i class="fa-solid fa-magnifying-glass text-2xl text-indigo-500 mb-2 block"></i>
+                                              <span class="font-bold text-xs text-slate-800">맥락 파악</span><br>
+                                              <span class="text-[10px] text-slate-500">숨은 의도와 배경</span>
+                                          </div>
+                                          <i class="fa-solid fa-arrow-right text-indigo-300 hidden sm:block"></i>
+                                          <i class="fa-solid fa-arrow-down text-indigo-300 block sm:hidden"></i>
+                                          <div class="flex-1 text-center w-full p-4 bg-indigo-600 rounded-lg border border-indigo-700 text-white shadow-md transform scale-105">
+                                              <i class="fa-solid fa-globe text-2xl text-amber-300 mb-2 block"></i>
+                                              <span class="font-bold text-xs">세상 읽기</span><br>
+                                              <span class="text-[10px] text-indigo-100">공동체 문제 공감</span>
+                                          </div>
+                                      </div>`
+                        },
+                        cautions: [
+                            "서로의 서로 다른 강점(글쓰기, 정보 탐색, 발표, 디자인 등)을 모아 협력하여 모둠활동을 진행합니다.",
+                            "나와 의견이 다르더라도 타인에 대한 비방이나 편향된 언어 사용을 지양합니다.",
+                            "모둠원 전체가 소외되지 않고 자유롭게 의견을 낼 수 있도록 경청하고 존중합니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "15분", 
+                                    title: "아이스브레이킹 및 모둠 편성", 
+                                    desc: "탐구를 함께할 4인 1조 모둠을 편성하고, 서로의 강점(글쓰기, 디자인, 리더십, 꼼꼼함 등)을 나누며 모둠 내 역할을 정합니다.",
+                                    exampleHtml: `<div class="bg-blue-50 p-3 rounded border border-blue-100 text-blue-800 text-[11px]">
+                                        <i class="fa-solid fa-users mr-1"></i> <strong>추천 역할 분담:</strong> 이끄미(진행), 기록이(서기), 탐색이(자료조사), 알리미(발표/디자인)
+                                    </div>`
+                                },
+                                { 
+                                    time: "30분", 
+                                    title: "생각 열기: 우리 사회 문제 브레인스토밍", 
+                                    desc: "최근 이슈가 된 사회 현상(환경, 사이버 윤리, 학교생활 등)을 각자 3개씩 포스트잇에 적고 전지에 붙여 모둠원과 공유 및 분류합니다.",
+                                    exampleHtml: `<div class="flex flex-wrap gap-4 justify-center py-2">
+                                        <div class="w-32 h-32 bg-yellow-100 shadow-md p-3 flex flex-col justify-center items-center text-center transform -rotate-2 border border-yellow-200">
+                                            <span class="text-xs font-bold text-slate-800 leading-tight">학교 앞<br>전동킥보드<br>방치 문제</span>
+                                        </div>
+                                        <div class="w-32 h-32 bg-pink-100 shadow-md p-3 flex flex-col justify-center items-center text-center transform rotate-3 border border-pink-200">
+                                            <span class="text-xs font-bold text-slate-800 leading-tight">단톡방<br>사이버 따돌림<br>현상</span>
+                                        </div>
+                                        <div class="w-32 h-32 bg-emerald-100 shadow-md p-3 flex flex-col justify-center items-center text-center transform -rotate-1 border border-emerald-200">
+                                            <span class="text-xs font-bold text-slate-800 leading-tight">우리 동네<br>일회용 컵<br>과다 사용</span>
+                                        </div>
+                                    </div>
+                                    <p class="mt-3 text-center text-[10px] text-slate-500">▲ 포스트잇 브레인스토밍 예시 (유사한 주제끼리 묶어보세요)</p>`
+                                },
+                                { 
+                                    time: "15분", 
+                                    title: "핵심 소주제 발표 및 학습지 기록", 
+                                    desc: "모둠에서 가장 다루고 싶은 주제 1가지를 선정하여 학급 전체에 짧게 공유하고, 학습지에 내용을 정리합니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: "내가 평소 관심 있어 하는 사회 현상이나 문제는 무엇인가요?", guide: "예: 학교 앞 킥보드 안전, SNS 악성 댓글, 플라스틱 쓰레기 등 구체적으로 적어보세요." },
+                                { title: "그 문제가 나와 우리 학교, 나아가 우리 공동체에 어떤 영향을 미치고 있나요?", guide: "문제의 심각성과 우리가 글로써 이 문제를 알려야 하는 이유를 작성하세요." }
+                            ]
+                        }
+                    },
+                    2: {
+                        explanation: {
+                            target: "인터넷 검색 엔진을 효과적으로 활용하여 사회 문제 관련 데이터를 수집하고, 막연한 관심사를 구체적인 탐구 소주제로 발전시킨다.",
+                            concept: `<p class="mb-3">방대한 인터넷 정보 속에서 내가 원하는 자료를 찾는 <strong>'키워드 검색 기법'</strong>을 배웁니다. 핵심 단어를 쪼개고, AND/OR 검색의 원리를 이해하여 검색의 정확도를 높입니다.</p>
+                                      <p class="mb-4">단순한 관심사를 구체적인 '탐구 소주제'로 구체화하는 과정을 거칩니다.</p>
+                                      
+                                      <div class="bg-indigo-900 text-white p-4 rounded-xl shadow-inner">
+                                          <div class="text-[11px] text-indigo-300 mb-1">검색 키워드 세분화 예시</div>
+                                          <div class="flex items-center gap-2 mb-2">
+                                              <span class="bg-rose-500 px-2 py-1 rounded text-xs font-bold">환경 오염 (X)</span>
+                                              <span class="text-xs text-indigo-200">너무 포괄적임</span>
+                                          </div>
+                                          <div class="flex items-center gap-2">
+                                              <span class="bg-emerald-500 px-2 py-1 rounded text-xs font-bold">중학생 + 일회용품 + 실태 (O)</span>
+                                              <span class="text-xs text-indigo-200">구체적이고 명확함</span>
+                                          </div>
+                                      </div>`
+                        },
+                        cautions: [
+                            "출처가 명확하지 않은 개인 블로그나 카페 글보다는 공식 기관 자료나 뉴스 기사를 우선적으로 활용합니다.",
+                            "기사의 작성 날짜를 반드시 확인하여 최신 정보(최근 1~2년 이내)인지 점검합니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "20분", 
+                                    title: "마인드맵을 통한 키워드 확장", 
+                                    desc: "선정한 주제에서 파생되는 핵심 단어, 연관 단어, 원인, 결과 등을 마인드맵으로 시각화하여 검색 키워드를 조합합니다.",
+                                    exampleHtml: `<div class="p-4 border border-dashed border-slate-300 rounded-lg flex items-center justify-center bg-white">
+                                        <div class="text-center relative">
+                                            <div class="bg-indigo-100 text-indigo-800 font-bold px-4 py-2 rounded-full inline-block z-10 relative border border-indigo-200">기후 변화</div>
+                                            <div class="absolute w-full h-full top-0 left-0">
+                                                <div class="absolute top-1/2 left-[110%] w-8 border-t-2 border-indigo-200"></div>
+                                                <div class="absolute top-1/2 right-[110%] w-8 border-t-2 border-indigo-200"></div>
+                                            </div>
+                                            <div class="absolute top-1/2 -translate-y-1/2 left-[calc(100%+2rem)] bg-white border border-slate-200 text-[10px] px-2 py-1 rounded shadow-sm whitespace-nowrap">탄소 배출</div>
+                                            <div class="absolute top-1/2 -translate-y-1/2 right-[calc(100%+2rem)] bg-white border border-slate-200 text-[10px] px-2 py-1 rounded shadow-sm whitespace-nowrap">분리수거</div>
+                                        </div>
+                                    </div>`
+                                },
+                                { 
+                                    time: "30분", 
+                                    title: "자료 수집 및 팩트체크", 
+                                    desc: "조합한 키워드로 포털 사이트에서 뉴스 기사, 통계청 자료 등을 검색하고, 출처가 명확한 자료만 선별합니다.",
+                                    exampleHtml: `<div class="space-y-2">
+                                        <div class="bg-white p-2 border border-emerald-200 rounded text-[11px] flex items-start gap-2">
+                                            <i class="fa-solid fa-circle-check text-emerald-500 mt-0.5"></i>
+                                            <div>
+                                                <strong>[신뢰도 높음] 통계청 보도자료</strong><br>
+                                                <span class="text-slate-500">공식 기관의 데이터이므로 근거로 활용 가능</span>
+                                            </div>
+                                        </div>
+                                    </div>`
+                                },
+                                { 
+                                    time: "10분", 
+                                    title: "모둠 소주제 제안서 작성", 
+                                    desc: "수집한 자료를 바탕으로 탐구 소주제를 한 문장으로 확정하고 교사의 피드백을 받습니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: "관심 분야 검색을 위해 선정한 핵심 키워드 조합 3가지는 무엇인가요?", guide: "예: [플라스틱 쓰레기] + [중학생 실천] + [대구]" },
+                                { title: "검색 결과를 바탕으로 고민 중인 탐구 소주제 후보를 자유롭게 적어보세요.", guide: "어떤 현상이나 문제에 가장 끌렸는지 간단한 메모 형태로 작성하세요." }
+                            ]
+                        }
+                    },
+                    3: {
+                        explanation: {
+                            target: "모둠원 각자가 탐색해 온 개인별 사회현상 문제를 공유하고, 선정 기준(구체성, 집필 가능성, 실현 가능성)에 부합하는 모둠의 최종 탐구 주제 1가지를 협의하여 확정한다.",
+                            concept: `<p class="mb-3">개인의 관심사를 모아 <strong>공동체의 문제를 해결하는 하나의 '모둠 탐구 주제'</strong>로 발전시키는 협력적 의사결정 단계입니다.</p>
+                                      <p class="mb-4">좋은 탐구 주제를 선정하기 위해 다음의 <strong>3대 핵심 기준</strong>을 반드시 충족해야 합니다.</p>
+                                      
+                                      <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                          <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl">
+                                              <div class="flex items-center gap-1.5 text-blue-800 font-bold text-xs mb-1">
+                                                  <i class="fa-solid fa-bullseye text-blue-600"></i> ① 구체성 (범위 좁히기)
+                                              </div>
+                                              <p class="text-[11px] text-slate-600 leading-tight">주제 범위가 막연히 넓지 않고, 중학생의 시선에서 깊이 파고들 수 있도록 좁혀져 있는가?</p>
+                                          </div>
+                                          <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                                              <div class="flex items-center gap-1.5 text-emerald-800 font-bold text-xs mb-1">
+                                                  <i class="fa-solid fa-pen-nib text-emerald-600"></i> ② 글쓰기 가능성
+                                              </div>
+                                              <p class="text-[11px] text-slate-600 leading-tight">신뢰할 수 있는 자료를 충분히 수집하여 필자의 뚜렷한 관점과 주장을 펼칠 수 있는가?</p>
+                                          </div>
+                                          <div class="bg-amber-50 border border-amber-200 p-3 rounded-xl">
+                                              <div class="flex items-center gap-1.5 text-amber-800 font-bold text-xs mb-1">
+                                                  <i class="fa-solid fa-hand-holding-heart text-amber-600"></i> ③ 실현 가능성
+                                              </div>
+                                              <p class="text-[11px] text-slate-600 leading-tight">제시할 대안과 해결책이 현실 속 우리 학교나 일상 공동체에서 실제로 실천될 수 있는가?</p>
+                                          </div>
+                                      </div>`
+                        },
+                        cautions: [
+                            "친구의 개인 탐구 아이디어를 비난하거나 평가절하하지 않고, 열린 마음으로 끝까지 경청합니다.",
+                            "한 사람의 의견으로 일방적으로 결정하지 않고, 모둠원 전원의 합의와 토의를 거쳐 민주적으로 주제를 도출합니다.",
+                            "주제가 너무 거대하거나 추상적이면(예: '지구 온난화 종식') 12월 보고서 작성이 어려워지므로 반드시 우리 일상과 밀접하게 좁힙니다.",
+                            "작성된 5~6차시 탐구학습지는 모둠의 출발점이므로, 꼼꼼히 작성하여 반드시 교사 피드백 확인 후 제출합니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "20분", 
+                                    title: "1. 모둠 편성 및 개인별 탐구 문제 공유하기", 
+                                    desc: "팀별 역할을 점검하고, 지난 1~4차시에서 각자 선정한 사회현상 문제와 검색한 참고자료를 돌아가며 3분씩 모둠원에게 소개하고 경청합니다.",
+                                    exampleHtml: `<div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-[11px] space-y-1.5">
+                                        <div class="font-bold text-slate-800"><i class="fa-solid fa-comments text-indigo-500 mr-1"></i> 공유 가이드 (1인당 3분):</div>
+                                        <div class="text-slate-600 pl-3">
+                                            • 내가 주목한 사회현상/문제는 무엇인가?<br>
+                                            • 왜 이 문제가 중요하며, 검색했던 대표 자료는 무엇인가?<br>
+                                            • 모둠원들은 발표를 들으며 흥미로운 점을 메모하기
+                                        </div>
+                                    </div>`
+                                },
+                                { 
+                                    time: "25분", 
+                                    title: "2. 3대 기준 기반 모둠 탐구 주제 확정하기", 
+                                    desc: "개인별 제안 중 가장 깊이 있게 탐구할 수 있는 주제를 선정합니다. ① 구체성(범위 좁히기), ② 글쓰기 가능성(자료 충분성), ③ 실현 가능성(현실적 대안)을 기준으로 검토하여 최종 1개의 주제를 확정합니다.",
+                                    exampleHtml: `<div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-[11px] space-y-2">
+                                        <div class="font-bold text-indigo-900"><i class="fa-solid fa-check-double text-indigo-600 mr-1"></i> 주제 발전 예시:</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-rose-100 text-rose-700 px-2 py-0.5 rounded font-semibold">수정 전 (광범위/모호)</span>
+                                            <span class="text-slate-700">"청소년의 미디어 과몰입 문제"</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">수정 후 (구체적/실현가능)</span>
+                                            <span class="text-slate-900 font-bold">"중학생의 숏폼 과시청 실태와 수업 집중도 향상을 위한 캠페인 제안"</span>
+                                        </div>
+                                    </div>`
+                                },
+                                { 
+                                    time: "15분", 
+                                    title: "3. 탐구학습지 작성 및 결과물 정리", 
+                                    desc: "확정된 주제를 바탕으로 우리가 글로써 답해야 할 '핵심 탐구 질문'을 도출하고, 개인별로 탐구학습지를 성실하게 작성한 뒤 모둠별로 모아 교사 피드백을 준비합니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            isSubmissionLesson: true,
+                            questions: [
+                                { 
+                                    title: "모둠원과 공유한 개인별 탐구 문제 요약 (최대 6인)", 
+                                    guide: "내가 이전 차시에서 찾아왔던 사회현상 문제와, 모둠원들이 가져온 흥미로운 아이디어를 각각 정리해 보세요.",
+                                    type: "table",
+                                    rows: 6
+                                },
+                                { 
+                                    title: "우리 모둠의 최종 확정 탐구 주제 및 3대 기준 자가 점검", 
+                                    guide: "모둠 토의를 거쳐 최종 결정한 주제(1문장)와, [① 범위의 구체성, ② 글쓰기 자료 가능성, ③ 실천 대안의 실현가능성]을 어떻게 만족하는지 이유를 적으세요.",
+                                    type: "textarea"
+                                },
+                                { 
+                                    title: "우리 모둠의 핵심 탐구 질문과 공동체 연결 기대 효과", 
+                                    guide: "이 탐구를 통해 우리 모둠이 독자(학교 및 지역사회)에게 던지고 싶은 핵심 질문과, 글을 통해 기대하는 긍정적 변화를 기록하세요.",
+                                    type: "textarea"
+                                }
+                            ]
+                        }
+                    },
+                    5: {
+                        explanation: {
+                            target: "ChatGPT, Gemini, Perplexity 등 대표적 생성형 AI의 특징을 파악하고, 원하는 답변을 얻기 위한 '프롬프트(질문)' 작성법을 익힌다.",
+                            concept: `<p class="mb-3">AI는 정답을 외우고 있는 기계가 아니라, 우리의 지시(Prompt)에 따라 문맥을 구성하는 <strong>'탐구 파트너'</strong>입니다.</p>
+                                      <p class="mb-4">도구별 강점을 이해하고 상황에 맞게 골라 쓰는 역량을 기릅니다.</p>
+                                      
+                                      <div class="grid grid-cols-3 gap-2">
+                                          <div class="bg-white border border-slate-200 p-2 rounded text-center shadow-sm">
+                                              <i class="fa-solid fa-sparkles text-amber-500 text-lg mb-1 block"></i>
+                                              <span class="text-[11px] font-bold block">ChatGPT</span>
+                                              <span class="text-[9px] text-slate-500">아이디어 & 교정</span>
+                                          </div>
+                                          <div class="bg-white border border-slate-200 p-2 rounded text-center shadow-sm">
+                                              <i class="fa-solid fa-brain text-blue-500 text-lg mb-1 block"></i>
+                                              <span class="text-[11px] font-bold block">Gemini</span>
+                                              <span class="text-[9px] text-slate-500">최신 정보 탐색</span>
+                                          </div>
+                                          <div class="bg-white border border-slate-200 p-2 rounded text-center shadow-sm">
+                                              <i class="fa-solid fa-quote-right text-emerald-500 text-lg mb-1 block"></i>
+                                              <span class="text-[11px] font-bold block">Perplexity</span>
+                                              <span class="text-[9px] text-slate-500">출처 제공 검색</span>
+                                          </div>
+                                      </div>`
+                        },
+                        cautions: [
+                            "AI는 그럴듯한 거짓말(환각 현상, Hallucination)을 할 수 있습니다. 반드시 포털 검색을 통해 사실 여부를 재확인(Cross-check)해야 합니다.",
+                            "로그인 시 개인정보(비밀번호, 집 주소, 친구 이름 등)를 절대 프롬프트에 입력하지 않습니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "20분", 
+                                    title: "AI 도구별 특징 비교 시연", 
+                                    desc: "교사가 동일한 질문을 세 가지 AI에 던지고, 답변의 스타일과 출처 제공 여부 차이를 학급 전체가 함께 분석합니다.",
+                                    exampleHtml: null
+                                },
+                                { 
+                                    time: "25분", 
+                                    title: "구체적 프롬프트 작성 실습", 
+                                    desc: "학생 각자의 탐구 주제에 맞추어 역할, 맥락, 구체적 지시를 포함한 질문을 직접 AI에게 던져봅니다.",
+                                    exampleHtml: `<div class="bg-slate-800 text-green-400 font-mono text-[11px] p-3 rounded-lg shadow-inner">
+                                        <span class="text-purple-400">[역할]</span> 너는 사회 문제에 관심이 많은 중학교 1학년이야.<br>
+                                        <span class="text-blue-400">[상황]</span> 우리는 '청소년 스마트폰 과의존'에 대해 조사하고 있어.<br>
+                                        <span class="text-amber-400">[지시]</span> 예방할 수 있는 교내 캠페인 아이디어 3가지를 표 형태로 제시해 줘.
+                                    </div>`
+                                },
+                                { 
+                                    time: "15분", 
+                                    title: "결과 공유 및 프롬프트 수정", 
+                                    desc: "가장 만족스러운 답변을 얻은 프롬프트를 모둠원과 공유하고, 부족한 답변은 질문을 수정하여 다시 물어봅니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: "내 탐구 주제와 관련해 AI에게 질문한 '프롬프트(질문)' 전문을 기록하세요.", guide: "역할, 상황, 요구사항이 명확히 들어가도록 구체적인 질문 내용을 적어보세요." },
+                                { title: "AI가 제공한 답변 중 가장 유용한 부분과, 검색으로 사실 확인(팩트체크)한 결과를 비교하세요.", guide: "어떤 정보를 얻었으며, 그 정보가 진짜 사실이 맞는지 확인한 과정을 기록합니다." }
+                            ]
+                        }
+                    },
+                    12: {
+                        explanation: {
+                            target: "보고서의 결론(요약 및 제언) 작성을 완료하여 초안을 마무리하고, AI 도구를 활용하여 어휘와 맞춤법, 논리적 흐름을 객관적으로 감수(교정)한다.",
+                            concept: `<p class="mb-3">글쓰기는 한 번에 완성되는 것이 아니라 거듭 고쳐 쓰는(퇴고) 과정을 통해 빛이 납니다. 본론에 타당한 근거가 충분한지, 결론에 주장이 잘 요약되었는지 점검합니다.</p>
+                                      <div class="bg-white p-3 border-l-4 border-indigo-500 rounded text-xs text-slate-700 shadow-sm mt-3">
+                                          <strong>AI 편집자 활용법:</strong> 자신이 직접 쓴 초안을 입력한 후, <span class="bg-indigo-100 text-indigo-800 px-1 rounded">"중1 수준에 맞는 자연스러운 어휘로 다듬어 줘"</span>, <span class="bg-indigo-100 text-indigo-800 px-1 rounded">"논리적인 비약이나 어색한 연결이 있는지 찾아 줘"</span> 라고 요청해 보세요.
+                                      </div>`
+                        },
+                        cautions: [
+                            "AI가 고쳐준 글을 그대로 복사해서 붙여넣고 자신이 쓴 것처럼 제출하는 것은 심각한 연구 윤리 위반(표절)입니다.",
+                            "AI의 제안은 참고만 할 뿐, 최종 문장은 반드시 '자신의 머리와 언어'를 통과하여 재창조되어야 합니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "25분", 
+                                    title: "보고서 결론 작성 및 초안 1차 완성", 
+                                    desc: "서론과 본론의 내용을 종합하여 앞으로의 실천 방안이나 제언을 담은 결론 단락을 작성하여 초안을 마무리합니다.",
+                                    exampleHtml: null
+                                },
+                                { 
+                                    time: "20분", 
+                                    title: "AI 활용 어휘 및 문맥 교정 실습", 
+                                    desc: "완성된 글을 단락별로 AI에 입력하여 맞춤법, 띄어쓰기, 어색한 문맥 교정을 요청하고 AI의 제안을 비판적으로 수용합니다.",
+                                    exampleHtml: `<div class="flex flex-col gap-2 text-[11px]">
+                                        <div class="p-2 border border-slate-200 rounded bg-slate-50">
+                                            <span class="text-slate-400 font-bold block mb-1">내 원본 초안:</span>
+                                            "스마트폰을 너무 마니 하면 눈도 나빠지고 친구들이랑 말도 안하게 되서 좀 안좋은거 같다."
+                                        </div>
+                                        <div class="text-center"><i class="fa-solid fa-arrow-down text-indigo-300"></i></div>
+                                        <div class="p-2 border border-indigo-200 rounded bg-indigo-50">
+                                            <span class="text-indigo-500 font-bold block mb-1">AI 교정 제안:</span>
+                                            "스마트폰을 과도하게 사용하면 시력 저하뿐만 아니라, 대면 대화가 줄어 교우 관계에도 부정적인 영향을 미칠 수 있습니다."
+                                        </div>
+                                    </div>`
+                                },
+                                { 
+                                    time: "15분", 
+                                    title: "자신의 언어로 다듬기 및 최종 퇴고", 
+                                    desc: "AI가 제안한 수정본 중 마음에 드는 표현만 취사선택하고, 내 말투와 개성이 살아있도록 문서 도구에서 최종 수정합니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: "내가 직접 작성한 초안 중 표현이 어색해서 수정이 필요했던 원문 문장을 적어보세요.", guide: "자신이 썼지만 어딘가 매끄럽지 않다고 느꼈던 문장 1~2개를 그대로 적습니다." },
+                                { title: "AI의 감수를 참고하여 최종적으로 매끄럽게 보완한 문장과 그렇게 고친 이유를 적어보세요.", guide: "어떤 어휘를 바꾸었고, 왜 그렇게 바꾸는 것이 더 논리적인지 이유를 명시하세요." }
+                            ]
+                        }
+                    },
+                    15: {
+                        explanation: {
+                            target: "Canva, PPT 등의 디자인 도구를 활용하여 청중의 이해를 돕고 러닝페어에 전시할 시각 자료(발표 슬라이드, 카드뉴스)를 기획하고 제작한다.",
+                            concept: `<p class="mb-3">시각 자료는 복잡한 내용을 단순화하여 전달하는 강력한 도구입니다. 한 슬라이드에 하나의 메시지만 담기(1 Slide 1 Message), 여백의 미 활용하기 등 프레젠테이션 디자인의 핵심 원리를 이해합니다.</p>
+                                      
+                                      <div class="flex justify-between items-center bg-white p-3 border border-slate-200 rounded-lg shadow-sm">
+                                          <div class="w-[45%] aspect-video bg-rose-50 flex flex-col justify-center p-2 border border-rose-200 text-[8px] text-slate-800">
+                                              <strong class="text-rose-600">나쁜 예 (줄글 가득)</strong>
+                                              지구 온난화로 인해 북극곰의 서식지가 매년 10%씩 감소하고 있으며 빙하가 녹아 해수면이 상승하고...
+                                          </div>
+                                          <div class="text-slate-300 mx-2"><i class="fa-solid fa-xmark"></i></div>
+                                          <div class="w-[45%] aspect-video bg-emerald-50 flex flex-col items-center justify-center p-2 border border-emerald-200 text-[10px] text-slate-800 text-center">
+                                              <strong class="text-emerald-600 mb-1">좋은 예 (시각화)</strong>
+                                              <div class="font-black text-lg text-slate-900 mb-1">10% <i class="fa-solid fa-arrow-down text-rose-500"></i></div>
+                                              매년 감소하는 서식지
+                                          </div>
+                                      </div>`
+                        },
+                        cautions: [
+                            "인터넷에 떠도는 이미지를 무단으로 캡처하여 사용하지 않으며, 저작권 무료(CC0) 이미지나 플랫폼 기본 요소를 활용합니다.",
+                            "발표 시 슬라이드에 글씨를 빽빽하게 채워 넣고 그대로 읽는 것은 피해야 합니다. 슬라이드는 보조 자료입니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "20분", 
+                                    title: "스토리보드 기획 및 역할 분담", 
+                                    desc: "보고서의 목차를 바탕으로 각 슬라이드에 들어갈 핵심 문장과 시각 이미지(그래프, 사진)를 종이에 먼저 스케치합니다.",
+                                    exampleHtml: null
+                                },
+                                { 
+                                    time: "30분", 
+                                    title: "Canva/PPT 슬라이드 실전 제작", 
+                                    desc: "디자인 플랫폼을 활용하여 모둠원들이 동시 접속하거나 역할을 나누어 가독성 높은 슬라이드와 인포그래픽을 제작합니다.",
+                                    exampleHtml: `<div class="bg-indigo-50 p-3 rounded-lg border border-indigo-100 text-[11px] text-indigo-900">
+                                        <i class="fa-solid fa-lightbulb text-amber-500 mr-1"></i> <strong>디자인 꿀팁:</strong><br>
+                                        1. 폰트는 2가지(제목용, 본문용)만 통일해서 사용하세요.<br>
+                                        2. 글씨 색상은 배경과 대비가 뚜렷하게(검정/흰색) 지정하세요.<br>
+                                        3. 화려한 애니메이션은 내용 전달을 방해하므로 자제하세요.
+                                    </div>`
+                                },
+                                { 
+                                    time: "10분", 
+                                    title: "1차 리허설 및 시간 점검", 
+                                    desc: "완성된 시각 자료를 띄워두고 대본을 읽으며 전체 발표 시간이 적절한지(3~5분) 가볍게 체크합니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: "우리 모둠의 발표 자료(시각 자료)에서 청중에게 가장 강조하고 싶은 핵심 메시지(1문장)는 무엇인가요?", guide: "청중이 발표를 다 듣고 집에 갈 때 반드시 기억했으면 하는 한 문장을 적어보세요." },
+                                { title: "청중의 이해를 돕기 위해 특별히 신경 쓴 시각적 요소(색상, 폰트, 그래프, 사진 등)를 설명하세요.", guide: "어떤 시각적 요소를 어디에 배치했는지, 그리고 왜 그렇게 디자인했는지 이유를 설명하세요." }
+                            ]
+                        }
+                    }
+                },
+                
+                get activeLessonDetail() {
+                    if (this.lessonDetails[this.activeSessionId]) {
+                        return this.lessonDetails[this.activeSessionId];
+                    }
+                    return {
+                        explanation: {
+                            target: `80분 블록타임 동안 [${this.activeSession.title}]의 목표를 달성하고, 국어과 탐구 수칙에 따라 활동 결과물을 도출한다.`,
+                            concept: `<p class="mb-3">본 차시(${this.activeSession.period})에서는 <strong>${this.activeSession.content}</strong> 활동을 깊이 있게 진행합니다.</p>
+                                      <p class="mb-3">이전 차시에서 배운 내용을 바탕으로 모둠원들과 토의하고 협력하여 탐구 과제를 한 단계 더 발전시키는 매우 중요한 시간입니다.</p>
+                                      <div class="bg-slate-50 p-3 rounded-lg border border-slate-200 text-xs text-slate-600 mt-2 flex items-start gap-2">
+                                          <i class="fa-solid fa-circle-info text-indigo-400 mt-0.5"></i>
+                                          <span>교사의 안내에 따라 단계별로 차분히 과제를 수행하며, 도움이 필요할 경우 손을 들어 교사에게 질문합니다.</span>
+                                      </div>`
+                        },
+                        cautions: [
+                            "활동 중 타인의 의견을 끝까지 경청하고 존중하며, 역할에 소외되는 친구 없이 능동적으로 참여합니다.",
+                            "디지털 도구 및 스마트 기기 사용 시 학급 규칙을 준수하고, 출처 표기와 저작권을 엄격하게 지킵니다."
+                        ],
+                        activity: {
+                            steps: [
+                                { 
+                                    time: "15분", 
+                                    title: "도입 및 이전 학습 상기", 
+                                    desc: "차시 주요 활동 목표를 공유하고, 이전 시간에 진행했던 탐구 진행 상황 및 준비물, 활용할 디지털 도구를 점검합니다.",
+                                    exampleHtml: null
+                                },
+                                { 
+                                    time: "35분", 
+                                    title: "핵심 탐구 및 모둠 활동 수행", 
+                                    desc: `${this.activeSession.title} 관련하여 자료 수집, 토의, 문서 작성 등 핵심이 되는 모둠별 및 개별 프로젝트 활동을 집중적으로 진행합니다.`,
+                                    exampleHtml: `<div class="bg-amber-50 p-3 rounded border border-amber-100 text-[11px] text-amber-900 text-center">
+                                        <i class="fa-solid fa-users text-amber-500 text-2xl mb-2 block"></i>
+                                        모둠원과 적극적으로 소통하며 결과물을 만들어내는 메인 활동 시간입니다.
+                                    </div>`
+                                },
+                                { 
+                                    time: "10분", 
+                                    title: "성찰 기록 및 상호 피드백", 
+                                    desc: "오늘 활동한 결과를 모둠 간에 짧게 교류하고, 탐구 학습지를 작성하여 교사에게 제출한 뒤 활동을 마무리합니다.",
+                                    exampleHtml: null
+                                }
+                            ]
+                        },
+                        worksheet: {
+                            questions: [
+                                { title: `[${this.activeSession.sessionNum}] 주요 활동 및 탐구 결과 정리`, guide: "오늘 80분 동안 모둠 및 개인 활동을 통해 새롭게 알아내거나 탐구한 핵심 내용을 상세히 기록하세요." },
+                                { title: "활동 중 느낀 점 또는 문제를 해결한 과정 기록", guide: "의견 조율, 정보 탐색 과정 등에서 겪었던 어려움과 이를 어떻게 해결했는지 성찰을 적어보세요." }
+                            ]
+                        }
+                    };
+                },
+
+                openLesson(id) {
+                    this.activeSessionId = id;
+                    this.currentView = 'lesson';
+                    this.lessonTab = 'explanation';
+                    
+                    if (id >= 1 && id <= 17) {
+                        this.quoteIndex = (id * 2) - 2;
+                    }
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                },
+
+                prevSession() {
+                    if (this.activeSessionId > 1) {
+                        this.activeSessionId--;
+                    }
+                },
+
+                nextSession() {
+                    if (this.activeSessionId < this.sessions.length) {
+                        this.activeSessionId++;
+                    }
+                },
+
+                getStageTotal(stageId) {
+                    return this.sessions.filter(s => s.stage === stageId).length;
+                },
+
+                getStageBadgeColor(stage) {
+                    switch(stage) {
+                        case '① 탐구': return 'bg-blue-100 text-blue-800 border border-blue-200';
+                        case '② 계획': return 'bg-emerald-100 text-emerald-800 border border-emerald-200';
+                        case '③ 실행': return 'bg-amber-100 text-amber-800 border border-amber-200';
+                        case '④ 공유·성찰': return 'bg-purple-100 text-purple-800 border border-purple-200';
+                        default: return 'bg-slate-100 text-slate-800';
+                    }
+                },
+
+                showToolInfo(toolName) {
+                    if (this.toolDatabase[toolName]) {
+                        this.activeToolInfo = this.toolDatabase[toolName];
+                    } else {
+                        this.activeToolInfo = {
+                            name: toolName,
+                            desc: `${toolName} 도구를 활용하여 차시 활동 과제를 수행합니다.`,
+                            prompt: '수업 시간에 교사의 안내에 따라 도구를 안전하게 사용하세요.',
+                            caution: '올바른 저작권 표시 및 출처 명시를 준수합니다.'
+                        };
+                    }
+                    this.modals.tool = true;
+                },
+
+                closeModal(name) {
+                    this.modals[name] = false;
+                },
+
+                printWorksheet() {
+                    this.lessonTab = 'worksheet';
+                    setTimeout(() => {
+                        const textareas = document.querySelectorAll('.printable-worksheet textarea');
+                        textareas.forEach(el => {
+                            el.style.height = 'auto';
+                            el.style.height = (el.scrollHeight + 5) + 'px';
+                        });
+                        window.print();
+                    }, 300);
+                }
+            };
+        }
+    </script>
+    <!-- Alpine.js for lightweight state management -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+</head>
+
+<body class="bg-slate-50 text-slate-800 antialiased min-h-screen flex flex-col" x-data="appData()" x-init="initData()">
+
+    <!-- Top Navigation Header -->
+    <header class="sticky top-0 z-40 glass-effect border-b border-slate-200 shadow-sm no-print">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap items-center justify-between gap-4">
+            <div class="flex items-center space-x-3 cursor-pointer" @click="currentView = 'dashboard'">
+                <div class="h-10 px-3 rounded-xl bg-indigo-600 flex items-center justify-center text-white font-bold text-sm shadow-md shadow-indigo-200 whitespace-nowrap">
+                    세상읽기반
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold px-2 py-0.5 bg-indigo-100 text-indigo-800 rounded-full">2026학년도 대구일중학교</span>
+                        <span class="text-xs font-medium text-slate-500">자유학기 주제선택 활동 (국어)</span>
+                    </div>
+                    <h1 class="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
+                        <span>세상 읽기와 공동체 글쓰기 탐구 대시보드</span>
+                        <span x-show="currentView === 'lesson'" class="text-xs px-2 py-0.5 bg-amber-500 text-white rounded-md font-normal">수업모드</span>
+                    </h1>
+                </div>
+            </div>
+
+            <!-- Header Actions -->
+            <div class="flex items-center gap-3">
+                <div class="flex items-center bg-slate-100 rounded-lg p-1.5 text-xs text-slate-600 border border-slate-200">
+                    <i class="fa-regular fa-calendar text-indigo-600 mr-1.5"></i>
+                    <span>러닝페어 전시: <strong class="text-slate-800">12월 4주</strong></span>
+                    <span class="ml-2 bg-indigo-600 text-white px-2 py-0.5 rounded font-bold" x-text="dDayText"></span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <section class="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white py-6 px-4 sm:px-6 lg:px-8 shadow-inner no-print">
+        <div class="max-w-7xl mx-auto">
+            <div class="space-y-2 overflow-x-auto pb-1">
+                <div class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 bg-amber-400/20 text-amber-300 border border-amber-400/30 rounded-full">
+                    <i class="fa-solid fa-lightbulb"></i> 핵심 탐구 질문 (Inquiry Question)
+                </div>
+                <!-- 한 줄 고정 텍스트 영역 -->
+                <div class="overflow-x-auto scrollbar-none py-1">
+                    <h2 class="text-lg sm:text-xl md:text-2xl font-extrabold text-amber-100 tracking-tight whitespace-nowrap">
+                        "글쓰기는 어떠한 방식으로 공동체 구성원을 연결하는가?"
+                    </h2>
+                </div>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                    사회현상 및 국어 활동 영역의 주제를 탐구하여 주장·설명하는 글을 작성하고, AI 도구를 윤리적으로 활용하여 12월 러닝페어에서 성과를 공유합니다.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-1 w-full">
+
+        <!-- VIEW 1: 첫 화면 (DASHBOARD VIEW) -->
+        <div x-show="currentView === 'dashboard'" x-transition class="space-y-6">
+            <!-- 단계 필터 & 검색 바 -->
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <!-- 단계 탭 -->
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-2 md:pb-0 scrollbar-none">
+                    <button @click="currentStage = 'ALL'" 
+                        :class="currentStage === 'ALL' ? 'bg-indigo-600 text-white shadow-sm' : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                        class="px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5">
+                        <i class="fa-solid fa-border-all"></i> 전체 차시 (34차시/17블록)
+                    </button>
+                    <template x-for="stage in stages" :key="stage.id">
+                        <button @click="currentStage = stage.id" 
+                            :class="currentStage === stage.id ? `${stage.activeBg} text-white shadow-sm` : 'bg-white text-slate-600 hover:bg-slate-100 border border-slate-200'"
+                            class="px-3.5 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap flex items-center gap-1.5">
+                            <i :class="stage.icon"></i>
+                            <span x-text="stage.name"></span>
+                            <span class="ml-1 px-1.5 py-0.2 text-[10px] rounded-full bg-slate-200/60 text-slate-700" :class="currentStage === stage.id ? 'bg-white/20 text-white' : ''" x-text="getStageTotal(stage.id)"></span>
+                        </button>
+                    </template>
+                </div>
+
+                <!-- 검색창 -->
+                <div class="flex items-center gap-2">
+                    <div class="relative w-full md:w-64">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xs"></i>
+                        <input type="text" x-model="searchQuery" placeholder="차시 주제, AI도구 검색..." class="w-full pl-8 pr-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- 좌측: 차시별 학습 카드 목록 -->
+                <div class="lg:col-span-2 space-y-4">
+                    <template x-for="item in filteredSessions" :key="item.id">
+                        <div class="bg-white rounded-2xl border border-slate-200 transition-all duration-200 hover:shadow-md overflow-hidden relative">
+                            <div class="p-5">
+                                <!-- 카드 상단 -->
+                                <div class="flex items-start justify-between gap-3 mb-2">
+                                    <div class="flex flex-wrap items-center gap-2">
+                                        <span class="px-2.5 py-1 text-xs font-bold rounded-lg" :class="getStageBadgeColor(item.stage)">
+                                            <span x-text="item.stage"></span>
+                                        </span>
+                                        <span class="text-xs font-semibold px-2 py-0.5 bg-slate-100 text-slate-700 rounded">
+                                            <i class="fa-regular fa-clock mr-1 text-indigo-600"></i><span x-text="item.period"></span>
+                                        </span>
+                                        <span class="text-xs text-slate-400" x-text="item.month"></span>
+                                    </div>
+                                </div>
+
+                                <!-- 제목 및 수업 입장 -->
+                                <h3 class="text-base font-bold text-slate-900 mb-1 cursor-pointer hover:text-indigo-600 transition flex items-center justify-between"
+                                    @click="openLesson(item.id)">
+                                    <span x-text="`${item.sessionNum} : ${item.title}`"></span>
+                                    <span class="text-xs text-indigo-600 font-semibold flex items-center gap-1 bg-indigo-50 px-2.5 py-1 rounded-lg hover:bg-indigo-100 transition">
+                                        수업 입장 <i class="fa-solid fa-arrow-right"></i>
+                                    </span>
+                                </h3>
+                                <p class="text-xs text-slate-600 leading-relaxed mb-3" x-text="item.content"></p>
+
+                                <!-- 하단 도구 안내 -->
+                                <div class="flex flex-wrap items-center gap-2 pt-3 border-t border-slate-100 text-xs">
+                                    <div class="flex items-center gap-1.5 flex-wrap">
+                                        <span class="text-slate-400 font-medium">준비물/도구:</span>
+                                        <template x-for="tool in item.tools" :key="tool">
+                                            <button @click.stop="showToolInfo(tool)" class="px-2 py-0.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 rounded text-[11px] font-semibold border border-indigo-100 transition flex items-center gap-1">
+                                                <i class="fa-solid fa-wrench text-[10px]"></i>
+                                                <span x-text="tool"></span>
+                                            </button>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </template>
+                </div>
+
+                <div class="space-y-6 no-print">
+                    <!-- AI 도구 가이드 박스 -->
+                    <div class="bg-gradient-to-br from-indigo-900 to-slate-900 rounded-2xl p-5 text-white shadow-lg">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-sm text-indigo-200 flex items-center gap-2">
+                                <i class="fa-solid fa-robot text-amber-400"></i> AI 도구 활용 가이드
+                            </h3>
+                            <span class="text-[10px] bg-indigo-800 text-indigo-200 px-2 py-0.5 rounded-full">탐구 도우미</span>
+                        </div>
+                        <p class="text-xs text-slate-300 mb-4 leading-relaxed">
+                            수업 차시별로 활용되는 AI 검색, 정리 및 감수 도구 모음입니다. 클릭하여 중학생용 프롬프트 가이드를 확인해보세요!
+                        </p>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button @click="showToolInfo('ChatGPT')" class="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-left border border-white/10 transition">
+                                <div class="font-bold text-xs text-amber-300"><i class="fa-solid fa-sparkles mr-1"></i>ChatGPT</div>
+                                <div class="text-[10px] text-slate-300 mt-0.5">아이디어, 교정</div>
+                            </button>
+                            <button @click="showToolInfo('Gemini')" class="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-left border border-white/10 transition">
+                                <div class="font-bold text-xs text-blue-300"><i class="fa-solid fa-brain mr-1"></i>Gemini</div>
+                                <div class="text-[10px] text-slate-300 mt-0.5">최신 정보 탐색</div>
+                            </button>
+                            <button @click="showToolInfo('Perplexity')" class="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-left border border-white/10 transition">
+                                <div class="font-bold text-xs text-emerald-300"><i class="fa-solid fa-quote-right mr-1"></i>Perplexity</div>
+                                <div class="text-[10px] text-slate-300 mt-0.5">출처 검증 검색</div>
+                            </button>
+                            <button @click="showToolInfo('Canva')" class="p-2.5 bg-white/10 hover:bg-white/20 rounded-xl text-left border border-white/10 transition">
+                                <div class="font-bold text-xs text-pink-300"><i class="fa-solid fa-palette mr-1"></i>Canva</div>
+                                <div class="text-[10px] text-slate-300 mt-0.5">러닝페어 발표</div>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 마음을 다지는 인성 한 스푼 (34개 명언) -->
+                    <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-2xl p-5 border border-amber-200/80 shadow-sm relative overflow-hidden">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-bold text-sm text-amber-950 flex items-center gap-2">
+                                <i class="fa-solid fa-heart text-rose-500"></i> 마음을 다지는 인성 한 스푼
+                            </h3>
+                            <button @click="nextQuote()" class="text-[11px] font-semibold text-amber-800 bg-amber-200/60 hover:bg-amber-200 px-2.5 py-1 rounded-lg transition flex items-center gap-1">
+                                <i class="fa-solid fa-rotate-right text-[10px]"></i>
+                                <span>다음 명언</span>
+                            </button>
+                        </div>
+
+                        <!-- 활성 명언 표시 -->
+                        <div class="bg-white/90 backdrop-blur-sm p-4 rounded-xl border border-amber-200/50 space-y-2 shadow-xs">
+                            <div class="flex items-center justify-between text-[10px] text-amber-800 font-bold mb-1">
+                                <span class="bg-amber-200/70 px-2 py-0.5 rounded-md" x-text="`[${currentQuote.session}차시] 명언`"></span>
+                                <span x-text="`${quoteIndex + 1} / 34`"></span>
+                            </div>
+                            <div class="flex items-start gap-2">
+                                <i class="fa-solid fa-quote-left text-amber-400 text-sm mt-0.5"></i>
+                                <p class="text-xs font-extrabold text-slate-800 leading-relaxed italic" x-text="currentQuote.text"></p>
+                            </div>
+                            <div class="text-right border-t border-amber-100 pt-2 mt-2">
+                                <span class="text-[11px] font-bold text-indigo-900 bg-indigo-50 px-2 py-0.5 rounded-md" x-text="`― ${currentQuote.source}`"></span>
+                            </div>
+                            <div class="bg-amber-100/50 p-2 rounded-lg text-[10px] text-amber-900 font-medium flex items-center gap-1.5">
+                                <i class="fa-solid fa-lightbulb text-amber-600"></i>
+                                <span x-text="`배움 포인트: ${currentQuote.context}`"></span>
+                            </div>
+                        </div>
+
+                        <!-- 명언 페이지 넘김 컨트롤 -->
+                        <div class="flex justify-between items-center text-xs mt-3 px-1 text-amber-900">
+                            <button @click="prevQuote()" class="px-2.5 py-1 bg-amber-200/60 hover:bg-amber-200 rounded-lg font-bold text-[11px] transition">
+                                <i class="fa-solid fa-chevron-left mr-1"></i> 이전
+                            </button>
+                            <span class="text-[11px] font-bold" x-text="`${quoteIndex + 1} / 34 차시`"></span>
+                            <button @click="nextQuote()" class="px-2.5 py-1 bg-amber-200/60 hover:bg-amber-200 rounded-lg font-bold text-[11px] transition">
+                                다음 <i class="fa-solid fa-chevron-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- VIEW 2: 차시별 수업 화면 (CLASSROOM MODE) -->
+        <div x-show="currentView === 'lesson'" x-transition class="space-y-6">
+            <!-- 상단 내비게이션 바 -->
+            <div class="flex flex-wrap items-center justify-between gap-4 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm no-print">
+                <div class="flex items-center gap-3">
+                    <button @click="currentView = 'dashboard'" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition flex items-center gap-1.5">
+                        <i class="fa-solid fa-arrow-left"></i> 목록으로
+                    </button>
+                    <!-- 차시 선택 셀렉트 박스 -->
+                    <select x-model.number="activeSessionId" class="bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <template x-for="s in sessions" :key="s.id">
+                            <option :value="s.id" x-text="`${s.sessionNum} : ${s.title}`"></option>
+                        </template>
+                    </select>
+                </div>
+
+                <!-- 이전/다음 차시 버튼 -->
+                <div class="flex items-center gap-2">
+                    <button @click="prevSession()" :disabled="activeSessionId === 1" class="px-3 py-1.5 bg-slate-100 disabled:opacity-40 hover:bg-indigo-50 text-slate-700 rounded-xl text-xs font-bold transition">
+                        <i class="fa-solid fa-chevron-left mr-1"></i> 이전 차시
+                    </button>
+                    <button @click="nextSession()" :disabled="activeSessionId === sessions.length" class="px-3 py-1.5 bg-indigo-600 disabled:opacity-40 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition">
+                        다음 차시 <i class="fa-solid fa-chevron-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 현재 차시 안내 배너 -->
+            <div class="bg-indigo-900 text-white p-6 rounded-3xl shadow-lg relative overflow-hidden no-print">
+                <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <div class="flex items-center gap-2 mb-2">
+                            <span class="px-2.5 py-0.5 bg-amber-400 text-indigo-950 font-black text-xs rounded-md" x-text="activeSession.stage"></span>
+                            <span class="text-xs text-indigo-200 font-semibold" x-text="`시기: ${activeSession.sessionNum}`"></span>
+                        </div>
+                        <h2 class="text-xl sm:text-2xl font-extrabold text-white mb-1" x-text="`${activeSession.sessionNum} : ${activeSession.title}`"></h2>
+                        <p class="text-xs text-indigo-100 max-w-2xl" x-text="activeSession.content"></p>
+                    </div>
+
+                    <div class="flex items-center gap-2">
+                        <button @click="printWorksheet()" class="px-4 py-2.5 bg-emerald-500 hover:bg-emerald-600 text-white text-xs font-bold rounded-xl shadow-md transition flex items-center gap-2">
+                            <i class="fa-solid fa-file-pdf"></i>
+                            <span>학습지 PDF 다운로드 / 인쇄</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 80분 블록타임 4단계 수업 세션 탭 -->
+            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <!-- 탭 메뉴 -->
+                <div class="flex border-b border-slate-200 bg-slate-50 overflow-x-auto no-print">
+                    <button @click="lessonTab = 'explanation'" :class="lessonTab === 'explanation' ? 'border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold' : 'text-slate-600 hover:text-slate-900'" class="px-5 py-3 text-xs font-medium flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-chalkboard text-indigo-500"></i> ① 개념 설명 (15분)
+                    </button>
+                    <button @click="lessonTab = 'caution'" :class="lessonTab === 'caution' ? 'border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold' : 'text-slate-600 hover:text-slate-900'" class="px-5 py-3 text-xs font-medium flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-triangle-exclamation text-rose-500"></i> ② 주의 사항 & AI 윤리 (5분)
+                    </button>
+                    <button @click="lessonTab = 'activity'" :class="lessonTab === 'activity' ? 'border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold' : 'text-slate-600 hover:text-slate-900'" class="px-5 py-3 text-xs font-medium flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-users-gear text-amber-500"></i> ③ 학생 활동 (60분)
+                    </button>
+                    <button @click="lessonTab = 'worksheet'" :class="lessonTab === 'worksheet' ? 'border-b-2 border-indigo-600 text-indigo-600 bg-white font-bold' : 'text-slate-600 hover:text-slate-900'" class="px-5 py-3 text-xs font-medium flex items-center gap-2 whitespace-nowrap">
+                        <i class="fa-solid fa-file-pen text-emerald-600"></i> ④ 중1 맞춤 탐구 학습지
+                    </button>
+                </div>
+
+                <!-- 탭 1: 개념 설명 (15분) -->
+                <div x-show="lessonTab === 'explanation'" class="p-6 space-y-4 no-print max-h-[70vh] overflow-y-auto">
+                    <div class="border-l-4 border-indigo-600 pl-4 py-1 bg-indigo-50/50 rounded-r-xl">
+                        <h3 class="font-bold text-sm text-indigo-900">교사 탐구 인도 및 주요 핵심 개념 (15분)</h3>
+                        <p class="text-xs text-slate-600 mt-0.5">본 차시에서 다루는 국어과 영역 및 평가 기준 연계 안내</p>
+                    </div>
+                    <div class="space-y-3 text-xs text-slate-700 leading-relaxed">
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-900 mb-1 flex items-center gap-1.5">
+                                <i class="fa-solid fa-bullseye text-indigo-600"></i> 학습 목표 (80분 블록타임 기준)
+                            </h4>
+                            <p x-text="activeLessonDetail.explanation.target"></p>
+                        </div>
+                        <div class="bg-slate-50 p-4 rounded-xl border border-slate-200">
+                            <h4 class="font-bold text-slate-900 mb-3 flex items-center gap-1.5">
+                                <i class="fa-solid fa-book-open text-indigo-600"></i> 교사 설명 및 개념 요약
+                            </h4>
+                            <div class="text-xs text-slate-700 leading-relaxed space-y-4" x-html="activeLessonDetail.explanation.concept"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 탭 2: 주의 사항 & AI 윤리 (5분) -->
+                <div x-show="lessonTab === 'caution'" class="p-6 space-y-4 no-print">
+                    <div class="border-l-4 border-rose-500 pl-4 py-1 bg-rose-50/50 rounded-r-xl">
+                        <h3 class="font-bold text-sm text-rose-900">수업 중 주의 사항 및 AI 디지털 윤리 수칙</h3>
+                        <p class="text-xs text-slate-600 mt-0.5">안전하고 정직한 연구 수행 및 모둠 협업 유의점</p>
+                    </div>
+                    <ul class="space-y-2 text-xs text-slate-700">
+                        <template x-for="(c, idx) in activeLessonDetail.cautions" :key="idx">
+                            <li class="flex items-start gap-2 bg-rose-50/30 p-3 rounded-xl border border-rose-100">
+                                <i class="fa-solid fa-circle-exclamation text-rose-500 mt-0.5"></i>
+                                <span x-text="c"></span>
+                            </li>
+                        </template>
+                    </ul>
+                </div>
+
+                <!-- 탭 3: 학생 활동 (60분) -->
+                <div x-show="lessonTab === 'activity'" class="p-6 space-y-6 no-print max-h-[70vh] overflow-y-auto">
+                    <div class="border-l-4 border-amber-500 pl-4 py-1 bg-amber-50/50 rounded-r-xl">
+                        <h3 class="font-bold text-sm text-amber-900">모둠 / 개인 탐구 실행 단계 (60분)</h3>
+                        <p class="text-xs text-slate-600 mt-0.5">실제 모둠별 및 개인별 활동 흐름과 시각적 예시 자료입니다.</p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <template x-for="(step, idx) in activeLessonDetail.activity.steps" :key="idx">
+                            <div class="p-5 bg-white border border-slate-200 rounded-2xl shadow-sm space-y-3 relative overflow-hidden">
+                                <div class="flex flex-wrap items-center justify-between gap-2 mb-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="w-6 h-6 rounded-full bg-amber-500 text-white font-bold flex items-center justify-center text-xs shadow-sm" x-text="idx+1"></span>
+                                        <h4 class="font-bold text-sm text-slate-900" x-text="step.title"></h4>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <!-- 3번째 활동(탐구학습지 작성) 상단 전용: PDF 인쇄 버튼 -->
+                                        <template x-if="idx === 2">
+                                            <button @click="printWorksheet()" class="px-2.5 py-1 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow-xs transition flex items-center gap-1">
+                                                <i class="fa-solid fa-file-pdf"></i>
+                                                <span>탐구학습지 PDF 인쇄</span>
+                                            </button>
+                                        </template>
+                                        <span class="text-[11px] font-bold text-indigo-600 bg-indigo-50 px-2.5 py-1 rounded-lg border border-indigo-100" x-text="step.time"></span>
+                                    </div>
+                                </div>
+                                
+                                <p class="text-xs text-slate-600 leading-relaxed pl-8" x-text="step.desc"></p>
+                                
+                                <!-- 3번째 활동 전용: 안내 및 즉시 출력/작성 버튼 박스 -->
+                                <template x-if="idx === 2">
+                                    <div class="ml-8 p-3.5 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-wrap items-center justify-between gap-3 shadow-xs">
+                                        <div class="text-xs text-emerald-950 flex items-center gap-2">
+                                            <i class="fa-solid fa-file-circle-check text-emerald-600 text-base"></i>
+                                            <span><strong>탐구학습지 작성 및 제출:</strong> 학습지 내용을 작성한 후 PDF로 출력하여 교사에게 제출합니다.</span>
+                                        </div>
+                                        <div class="flex items-center gap-2">
+                                            <button @click="lessonTab = 'worksheet'" class="px-3 py-1.5 bg-white hover:bg-emerald-100 text-emerald-800 border border-emerald-300 rounded-lg text-xs font-bold transition flex items-center gap-1">
+                                                <i class="fa-solid fa-file-pen"></i> 학습지 입력 화면
+                                            </button>
+                                            <button @click="printWorksheet()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold shadow-xs transition flex items-center gap-1.5">
+                                                <i class="fa-solid fa-print"></i> PDF 인쇄 / 다운로드
+                                            </button>
+                                        </div>
+                                    </div>
+                                </template>
+
+                                <div class="mt-4 ml-8 p-4 bg-slate-50 rounded-xl border border-slate-100" x-show="step.exampleHtml">
+                                    <div class="text-[10px] font-bold text-slate-400 mb-3 flex items-center gap-1.5 uppercase tracking-wider">
+                                        <i class="fa-solid fa-image text-amber-500"></i> 참고 예시 및 활동 시각 자료
+                                    </div>
+                                    <div class="text-xs text-slate-700" x-html="step.exampleHtml"></div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- 탭 4: 중1 맞춤 탐구 학습지 (출력 및 작성 영역) -->
+                <div x-show="lessonTab === 'worksheet'" class="p-6 sm:p-8 bg-white printable-worksheet">
+                    
+                    <!-- 학습지 상단 헤더 블록 -->
+                    <div class="border-b-2 border-slate-900 pb-4 space-y-3">
+                        <div class="flex justify-between items-center text-xs text-slate-500">
+                            <span>2026학년도 대구일중학교 자유학기 주제선택 활동 (국어)</span>
+                            <span class="font-bold text-indigo-700 px-2 py-0.5 bg-indigo-50 rounded" x-text="activeSession.stage"></span>
+                        </div>
+
+                        <!-- 깔끔한 화이트 테마 학습지 타이틀 박스 -->
+                        <div class="bg-white p-4 rounded-xl space-y-1.5 border border-slate-300 border-l-4 border-l-indigo-600 shadow-sm">
+                            <div class="flex items-center gap-2">
+                                <span class="px-2 py-0.5 bg-indigo-100 text-indigo-800 font-extrabold text-xs rounded" x-text="`[${activeSession.sessionNum}] 탐구 학습지`"></span>
+                            </div>
+                            <h2 class="text-base sm:text-lg font-bold text-slate-900 tracking-tight" x-text="`${activeSession.title}`"></h2>
+                            <p class="text-xs text-slate-600 border-t border-slate-200 pt-1.5 mt-1 leading-relaxed" x-text="`주요 활동 내용: ${activeSession.content}`"></p>
+                        </div>
+
+                        <!-- 중학교 1학년 인적사항 입력란 (반, 번호, 이름, 수업일 모두 빈칸) -->
+                        <div class="p-3 bg-slate-50 border border-slate-300 rounded-lg flex flex-wrap items-center justify-between gap-4 text-xs font-bold">
+                            <div class="flex items-center gap-4">
+                                <span>중학교 1학년</span>
+                                <div class="flex items-center gap-1">
+                                    <input type="text" x-model="studentInfo.gradeClass" class="w-10 text-center border-b border-slate-400 font-bold bg-transparent focus:outline-none">
+                                    <span>반</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <input type="text" x-model="studentInfo.number" class="w-12 text-center border-b border-slate-400 font-bold bg-transparent focus:outline-none">
+                                    <span>번</span>
+                                </div>
+                                <div class="flex items-center gap-1">
+                                    <span>이름 :</span>
+                                    <input type="text" x-model="studentInfo.name" class="w-24 border-b border-slate-400 font-bold bg-transparent focus:outline-none px-1">
+                                </div>
+                            </div>
+                            <div class="text-slate-500 font-normal">
+                                <span>수업일: </span>
+                                <input type="text" x-model="studentInfo.date" class="w-24 border-b border-slate-300 text-center bg-transparent focus:outline-none">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 학습지 문항 영역 (A4 1페이지 최적화) -->
+                    <div class="space-y-4 text-xs pt-3">
+                        <!-- 핵심 탐구 질문 상기 -->
+                        <div class="p-3 bg-indigo-50/60 border border-indigo-200 rounded-lg">
+                            <span class="font-bold text-indigo-900">핵심 탐구 질문:</span>
+                            <span class="italic text-indigo-800">"글쓰기는 어떠한 방식으로 공동체 구성원을 연결하는가?"</span>
+                        </div>
+
+                        <!-- 오늘 배운 내용 요약 -->
+                        <div class="p-3.5 bg-slate-50 border border-slate-300 rounded-xl space-y-2" style="page-break-inside: avoid;">
+                            <h3 class="font-bold text-slate-900 text-xs flex items-center gap-1.5">
+                                <i class="fa-solid fa-book-open text-indigo-600"></i>
+                                <span>오늘 배운 내용 요약</span>
+                            </h3>
+                            <p class="text-slate-600 text-[11px] leading-relaxed" x-text="activeLessonDetail.explanation.target"></p>
+                            <div class="pt-1">
+                                <textarea rows="2" placeholder="오늘 수업 시간에 배운 핵심 개념과 요점을 나의 언어로 요약해 정리해봅시다..." class="textarea-default w-full p-2.5 bg-white border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed text-slate-800 text-[11px]"></textarea>
+                            </div>
+                        </div>
+
+                        <!-- 차시별 동적 탐구 문항 -->
+                        <template x-for="(q, qIdx) in activeLessonDetail.worksheet.questions" :key="qIdx">
+                            <div class="space-y-2" style="page-break-inside: avoid;">
+                                <h3 class="font-bold text-slate-900 text-sm flex items-center gap-1.5">
+                                    <span class="w-5 h-5 rounded bg-slate-800 text-white text-xs flex items-center justify-center font-bold" x-text="qIdx+1"></span>
+                                    <span x-text="q.title"></span>
+                                </h3>
+                                <p class="text-slate-600 text-[11px] pl-6" x-text="q.guide"></p>
+                                
+                                <div class="pl-6 pt-1">
+                                    <!-- 텍스트 상자 형식 (기본값) -->
+                                    <template x-if="!q.type || q.type === 'textarea'">
+                                        <textarea rows="3" placeholder="여기에 나의 생각이나 탐구 내용을 기록하세요..." class="textarea-default w-full p-3 bg-slate-50 border border-slate-300 rounded-lg focus:ring-2 focus:ring-indigo-500 outline-none leading-relaxed text-slate-800 text-[11px]"></textarea>
+                                    </template>
+
+                                    <!-- 표(Table) 형식 (모둠원 요약용) -->
+                                    <template x-if="q.type === 'table'">
+                                        <div class="w-full overflow-x-auto border border-slate-400 rounded-lg mt-1">
+                                            <table class="w-full text-left border-collapse table-fixed min-w-[500px]">
+                                                <thead>
+                                                    <tr class="bg-slate-100 border-b border-slate-400 text-[10px] font-bold text-slate-800 text-center">
+                                                        <th class="p-1.5 border-r border-slate-400 w-[15%]">모둠원 이름</th>
+                                                        <th class="p-1.5 border-r border-slate-400 w-[25%]">탐구 주제</th>
+                                                        <th class="p-1.5 border-r border-slate-400 w-[35%]">검색 자료 내용</th>
+                                                        <th class="p-1.5 w-[25%]">검토 의견</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <template x-for="i in q.rows" :key="i">
+                                                        <tr class="border-b border-slate-400 last:border-b-0">
+                                                            <td class="border-r border-slate-400 p-0"><textarea rows="1" class="table-textarea w-full h-full min-h-[28px] bg-transparent outline-none text-[10px] p-1.5 resize-none overflow-hidden" placeholder="이름"></textarea></td>
+                                                            <td class="border-r border-slate-400 p-0"><textarea rows="1" class="table-textarea w-full h-full min-h-[28px] bg-transparent outline-none text-[10px] p-1.5 resize-none overflow-hidden" placeholder="주제"></textarea></td>
+                                                            <td class="border-r border-slate-400 p-0"><textarea rows="1" class="table-textarea w-full h-full min-h-[28px] bg-transparent outline-none text-[10px] p-1.5 resize-none overflow-hidden" placeholder="기사, 통계 등"></textarea></td>
+                                                            <td class="p-0"><textarea rows="1" class="table-textarea w-full h-full min-h-[28px] bg-transparent outline-none text-[10px] p-1.5 resize-none overflow-hidden" placeholder="의견"></textarea></td>
+                                                        </tr>
+                                                    </template>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    </template>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- 5~6차시 전용: 교사 확인 및 제출 피드백 블록 -->
+                        <template x-if="activeLessonDetail.worksheet.isSubmissionLesson">
+                            <div class="mt-4 p-3.5 bg-amber-50/70 border-2 border-dashed border-amber-300 rounded-xl space-y-2" style="page-break-inside: avoid;">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2">
+                                        <span class="px-2 py-0.5 bg-amber-600 text-white font-black text-[10px] rounded">필수 제출 차시</span>
+                                        <h4 class="font-bold text-amber-950 text-xs flex items-center gap-1">
+                                            <i class="fa-solid fa-clipboard-check text-amber-600"></i> 교사 확인 및 탐구 주제 승인란
+                                        </h4>
+                                    </div>
+                                    <span class="text-[10px] text-amber-800 font-medium">※ 작성 후 담당 교사에게 검토 및 승인을 받으세요.</span>
+                                </div>
+                                <div class="grid grid-cols-1 sm:grid-cols-4 gap-2 pt-1 text-[11px]">
+                                    <div class="sm:col-span-3 bg-white p-2 rounded border border-amber-200">
+                                        <span class="font-bold text-slate-700 block mb-1 text-[10px]">교사 총평 및 피드백 코멘트:</span>
+                                        <div class="text-slate-400 italic text-[10px] h-9 flex items-center">선생님의 검토 피드백 및 발전 방향이 기재되는 영역입니다.</div>
+                                    </div>
+                                    <div class="bg-white p-2 rounded border border-amber-200 flex flex-col justify-between text-center">
+                                        <span class="font-bold text-slate-700 text-[10px]">주제 승인 여부</span>
+                                        <div class="text-[11px] font-bold text-emerald-700 py-1">[ 승인 / 보완 ]</div>
+                                        <div class="text-[9px] text-slate-500 border-t border-slate-200 pt-1">확인 교사 서명: (인)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+
+                        <!-- 오늘의 활동 성찰 (Self-Reflection) -->
+                        <div class="mt-4 pt-3 border-t border-slate-300" style="page-break-inside: avoid;">
+                            <h4 class="font-bold text-slate-900 mb-2 text-xs">오늘의 활동 성찰 (Self-Reflection)</h4>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div class="p-3 bg-slate-50 border border-slate-300 rounded-lg space-y-1">
+                                    <span class="font-bold text-slate-700 text-[11px]">새롭게 알게 된 점 / 탐구 소감</span>
+                                    <textarea rows="2" class="table-textarea w-full bg-transparent outline-none border-b border-slate-300 text-[11px]" placeholder="작성하기..."></textarea>
+                                </div>
+                                <div class="p-3 bg-slate-50 border border-slate-300 rounded-lg space-y-1">
+                                    <span class="font-bold text-slate-700 text-[11px]">AI 활용 또는 모둠 협업 피드백</span>
+                                    <textarea rows="2" class="table-textarea w-full bg-transparent outline-none border-b border-slate-300 text-[11px]" placeholder="작성하기..."></textarea>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    </main>
+
+    <!-- AI 도구 가이드 팝업 모달 -->
+    <div x-show="modals.tool" x-cloak class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm no-print"
+        x-transition:enter="transition ease-out duration-200" x-transition:enter-start="opacity-0" x-transition:enter-end="opacity-100">
+        <div class="bg-white rounded-2xl shadow-xl border border-slate-100 w-full max-w-md overflow-hidden" @click.away="closeModal('tool')">
+            <div class="p-5 bg-slate-900 text-white flex justify-between items-center">
+                <h3 class="font-bold text-sm flex items-center gap-2 text-amber-300">
+                    <i class="fa-solid fa-robot"></i> <span x-text="activeToolInfo.name"></span> 활용 가이드
+                </h3>
+                <button @click="closeModal('tool')" class="text-white/80 hover:text-white"><i class="fa-solid fa-xmark"></i></button>
+            </div>
+            <div class="p-5 space-y-4 text-xs">
+                <div>
+                    <h4 class="font-bold text-slate-800 mb-1">주요 기능</h4>
+                    <p class="text-slate-600 leading-relaxed" x-text="activeToolInfo.desc"></p>
+                </div>
+                <div class="bg-indigo-50 p-3 rounded-xl border border-indigo-100">
+                    <h4 class="font-bold text-indigo-900 mb-1"><i class="fa-solid fa-terminal mr-1"></i>중학생 추천 프롬프트 예시</h4>
+                    <p class="font-mono text-indigo-800 text-[11px] bg-white p-2 rounded border border-indigo-200" x-text="activeToolInfo.prompt"></p>
+                </div>
+                <div class="bg-amber-50 p-3 rounded-xl border border-amber-200 text-amber-900">
+                    <h4 class="font-bold mb-1"><i class="fa-solid fa-triangle-exclamation mr-1"></i>AI 활용 윤리 수칙</h4>
+                    <p class="text-[11px]" x-text="activeToolInfo.caution"></p>
+                </div>
+                <div class="pt-2 flex justify-end">
+                    <button @click="closeModal('tool')" class="px-4 py-2 bg-slate-800 text-white font-bold rounded-xl">확인</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 하단 푸터 -->
+    <footer class="bg-white border-t border-slate-200 py-6 mt-12 text-center text-xs text-slate-500 no-print">
+        <div class="max-w-7xl mx-auto px-4">
+            <p class="font-semibold text-slate-700">2026학년도 대구일중학교 자유학기 주제선택 활동 (국어과)</p>
+            <p class="mt-1 text-slate-400">자유학기 탐구 사이클 기반 | 제작/배포: 자유학기제 선도교사</p>
+        </div>
+    </footer>
+
+</body>
+</html>
