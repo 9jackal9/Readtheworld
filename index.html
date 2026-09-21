@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2026 대구일중학교 자유학기 국어 탐구 대시보드</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Alpine.js -->
+    <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        .content-scroll { max-height: calc(100vh - 280px); overflow-y: auto; padding-right: 10px; }
+
+        /* Print Optimization (A4 Standardized) */
+        @media print {
+            @page { size: A4 auto; margin: 10mm; }
+            body { background-color: white !important; }
+            .no-print { display: none !important; }
+            .print-only { display: block !important; }
+            .print-full-width { width: 100% !important; max-width: 100% !important; margin: 0 !important; padding: 0 !important; box-shadow: none !important; border: none !important; }
+            
+            * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+            
+            .page-break-inside-avoid { page-break-inside: avoid; }
+            
+            textarea { resize: none; overflow: hidden; border-color: #cbd5e1 !important; background-color: transparent !important; }
+            table { border-collapse: collapse !important; width: 100% !important; }
+            th, td { border: 1px solid #94a3b8 !important; }
+        }
+        
+        .auto-resize { overflow: hidden; resize: none; }
+    </style>
+</head>
+<body x-data="appData()" class="text-slate-800 antialiased selection:bg-indigo-100 selection:text-indigo-900">
+
+    <!-- Global Header -->
+    <header class="bg-white border-b border-slate-200 sticky top-0 z-50 no-print shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3 cursor-pointer" @click="changeView('dashboard')">
+                <div class="bg-indigo-600 text-white p-2 rounded-lg flex items-center justify-center shadow-md">
+                    <i class="fa-solid fa-book-open"></i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold text-slate-800 leading-tight">대구일중학교</h1>
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs font-semibold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100">세상읽기반</span>
+                        <span class="text-xs text-slate-500 font-medium hidden sm:inline-block">2026 자유학기 주제선택 활동</span>
+                    </div>
+                </div>
+            </div>
+            <button x-show="currentView === 'lesson'" @click="changeView('dashboard')" 
+                    class="flex items-center gap-2 text-sm font-bold text-slate-600 bg-slate-100 hover:bg-slate-200 px-4 py-2 rounded-lg transition-colors border border-slate-200">
+                <i class="fa-solid fa-arrow-left"></i> 대시보드로 돌아가기
+            </button>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" :class="{'print-full-width': currentView === 'lesson' && activeTab === 'worksheet'}">
+        
+        <!-- DASHBOARD VIEW -->
+        <div x-show="currentView === 'dashboard'" class="space-y-8 no-print">
+            
+            <!-- Hero Banner -->
+            <div class="bg-gradient-to-r from-indigo-600 to-blue-700 rounded-2xl p-8 text-white shadow-lg relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-indigo-500">
+                <div class="relative z-10">
+                    <span class="inline-block px-3 py-1 bg-white/20 rounded-full text-xs font-bold tracking-wider mb-4 border border-white/30 shadow-sm backdrop-blur-sm">핵심 탐구 질문</span>
+                    <h2 class="text-xl md:text-3xl font-extrabold leading-tight tracking-tight whitespace-normal sm:whitespace-nowrap drop-shadow-md">
+                        "글쓰기는 어떠한 방식으로 공동체 구성원을 연결하는가?"
+                    </h2>
+                </div>
+                <div class="relative z-10 flex-shrink-0 opacity-80">
+                    <i class="fa-solid fa-earth-asia text-6xl text-white/20"></i>
+                </div>
+                <div class="absolute top-0 right-0 -mr-20 -mt-20 w-64 h-64 rounded-full bg-white opacity-10 blur-3xl"></div>
+                <div class="absolute bottom-0 left-0 -ml-20 -mb-20 w-48 h-48 rounded-full bg-indigo-400 opacity-30 blur-2xl"></div>
+            </div>
+
+            <!-- Filter Tabs -->
+            <div class="flex flex-wrap gap-2 border-b border-slate-200 pb-4">
+                <template x-for="filter in [{id:'all', label:'전체 보기'}, {id:'1', label:'1단계 (문제 발견)'}, {id:'2', label:'2단계 (자료 수집)'}, {id:'3', label:'3단계 (글쓰기)'}, {id:'4', label:'4단계 (발표/성찰)'}]">
+                    <button @click="filterGroup = filter.id" 
+                            :class="filterGroup === filter.id ? 'bg-indigo-600 text-white border-indigo-600 shadow-md' : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'" 
+                            class="px-5 py-2.5 rounded-xl font-bold border transition-all duration-200 text-sm"
+                            x-text="filter.label"></button>
+                </template>
+            </div>
+
+            <div class="flex flex-col lg:flex-row gap-8">
+                <!-- Lesson Grid -->
+                <div class="w-full lg:w-3/4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+                        <template x-for="lesson in filteredLessons" :key="lesson.id">
+                            <div class="bg-white rounded-2xl border border-slate-200 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col h-full overflow-hidden group cursor-pointer" @click="enterLesson(lesson.id)">
+                                <div class="p-6 border-b border-slate-100 relative overflow-hidden bg-white">
+                                    <div class="absolute top-0 right-0 w-24 h-24 bg-indigo-50 rounded-bl-full -mr-4 -mt-4 transition-transform group-hover:scale-110"></div>
+                                    <div class="flex justify-between items-start mb-3 relative z-10">
+                                        <span class="inline-flex items-center justify-center px-3 py-1 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200" x-text="lesson.time"></span>
+                                        <span class="inline-flex items-center justify-center px-2.5 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100" x-text="lesson.group + '단계'"></span>
+                                    </div>
+                                    <h3 class="text-lg font-bold text-slate-800 leading-tight mb-2 relative z-10 group-hover:text-indigo-600 transition-colors" x-text="lesson.title"></h3>
+                                </div>
+                                <div class="p-6 flex-grow bg-slate-50">
+                                    <ul class="space-y-2.5 mb-6">
+                                        <template x-for="task in lesson.tasks" :key="task">
+                                            <li class="text-sm text-slate-600 flex items-start gap-2 font-medium">
+                                                <i class="fa-solid fa-check text-indigo-400 mt-1 flex-shrink-0 text-xs"></i>
+                                                <span class="leading-relaxed" x-text="task"></span>
+                                            </li>
+                                        </template>
+                                    </ul>
+                                </div>
+                                <div class="p-4 border-t border-slate-200 bg-white">
+                                    <button class="w-full py-2.5 bg-indigo-50 text-indigo-700 font-bold rounded-xl transition-colors duration-200 text-sm flex items-center justify-center gap-2 group-hover:bg-indigo-600 group-hover:text-white">
+                                        <span>수업 입장</span> <i class="fa-solid fa-arrow-right text-xs"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Right Sidebar -->
+                <div class="w-full lg:w-1/4 space-y-6">
+                    <div class="bg-slate-800 rounded-2xl p-6 text-white shadow-lg border border-slate-700 relative overflow-hidden">
+                        <div class="absolute -right-4 -bottom-4 opacity-10 text-8xl"><i class="fa-solid fa-robot"></i></div>
+                        <h3 class="text-base font-bold mb-4 flex items-center gap-2 relative z-10"><i class="fa-solid fa-lightbulb text-yellow-400"></i> AI 도구 활용 가이드</h3>
+                        <ul class="space-y-3 text-sm text-slate-300 relative z-10 font-medium">
+                            <li class="flex items-start gap-2"><div class="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-blue-400"></div><span>아이디어 브레인스토밍</span></li>
+                            <li class="flex items-start gap-2"><div class="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-green-400"></div><span>자료 요약 및 구조화 지원</span></li>
+                            <li class="flex items-start gap-2"><div class="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-purple-400"></div><span>맞춤법 및 문맥 교정</span></li>
+                            <li class="flex items-start gap-2"><div class="mt-1 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-red-400"></div><span>가짜 뉴스 팩트 체크</span></li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm flex flex-col h-[320px]">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="text-sm font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-seedling text-emerald-500"></i> 마음을 다지는 인성 한 스푼</h3>
+                            <span class="text-xs font-bold text-slate-400 bg-slate-100 px-2 py-1 rounded-lg" x-text="`${currentQuoteIndex + 1} / ${quotes.length}`"></span>
+                        </div>
+                        <div class="flex-grow flex flex-col justify-center relative">
+                            <i class="fa-solid fa-quote-left text-3xl text-slate-100 absolute top-0 left-0 -mt-2 -ml-2"></i>
+                            <p class="text-slate-700 font-bold leading-relaxed text-sm relative z-10 pl-4 border-l-2 border-emerald-400" x-text="quotes[currentQuoteIndex].text"></p>
+                            <p class="text-xs text-slate-500 text-right mt-3 font-semibold" x-text="'- ' + quotes[currentQuoteIndex].author"></p>
+                        </div>
+                        <div class="mt-4 pt-4 border-t border-slate-100">
+                            <div class="text-xs mb-3 bg-emerald-50 p-2 rounded-lg border border-emerald-100">
+                                <span class="font-bold text-emerald-700"><i class="fa-solid fa-check-circle mr-1"></i> 배움 포인트:</span>
+                                <span class="text-slate-700 font-medium ml-1" x-text="quotes[currentQuoteIndex].point"></span>
+                            </div>
+                            <div class="flex gap-2">
+                                <button @click="prevQuote" class="flex-1 py-2 bg-white hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold transition border border-slate-200 shadow-sm"><i class="fa-solid fa-chevron-left mr-1"></i> 이전</button>
+                                <button @click="nextQuote" class="flex-1 py-2 bg-white hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-bold transition border border-slate-200 shadow-sm">다음 <i class="fa-solid fa-chevron-right ml-1"></i></button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- CLASSROOM VIEW -->
+        <div x-show="currentView === 'lesson'" style="display: none;" class="max-w-5xl mx-auto h-full flex flex-col" :class="{'print-full-width': activeTab === 'worksheet'}">
+            
+            <!-- Lesson Header (Hidden during print) -->
+            <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-sm mb-6 no-print">
+                <div class="flex items-center gap-3 mb-2">
+                    <span class="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-lg border border-indigo-100" x-text="currentLesson ? currentLesson.time : ''"></span>
+                    <span class="text-sm font-bold text-slate-500" x-text="currentLesson ? currentLesson.group + '단계' : ''"></span>
+                </div>
+                <h2 class="text-2xl font-black text-slate-900" x-text="currentLesson ? currentLesson.title : ''"></h2>
+            </div>
+
+            <!-- Tabs Navigation -->
+            <div class="flex border-b border-slate-200 mb-6 gap-2 no-print overflow-x-auto pb-1">
+                <button @click="activeTab = 'concept'" :class="activeTab === 'concept' ? 'border-indigo-600 text-indigo-700 bg-indigo-50 shadow-inner' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="px-6 py-3 border-b-2 font-bold text-sm transition-all whitespace-nowrap rounded-t-lg">
+                    <i class="fa-solid fa-chalkboard-user mr-2"></i> 개념 설명 <span class="ml-1 text-xs font-semibold opacity-75">(15분)</span>
+                </button>
+                <button @click="activeTab = 'caution'" :class="activeTab === 'caution' ? 'border-rose-500 text-rose-700 bg-rose-50 shadow-inner' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="px-6 py-3 border-b-2 font-bold text-sm transition-all whitespace-nowrap rounded-t-lg">
+                    <i class="fa-solid fa-triangle-exclamation mr-2"></i> 주의 및 윤리 <span class="ml-1 text-xs font-semibold opacity-75">(5분)</span>
+                </button>
+                <button @click="activeTab = 'activity'" :class="activeTab === 'activity' ? 'border-emerald-500 text-emerald-700 bg-emerald-50 shadow-inner' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="px-6 py-3 border-b-2 font-bold text-sm transition-all whitespace-nowrap rounded-t-lg">
+                    <i class="fa-solid fa-users-rays mr-2"></i> 학생 활동 <span class="ml-1 text-xs font-semibold opacity-75">(60분)</span>
+                </button>
+                <button x-show="safeLessonDetail.hasWorksheet" @click="activeTab = 'worksheet'" :class="activeTab === 'worksheet' ? 'border-blue-600 text-blue-700 bg-blue-50 shadow-inner' : 'border-transparent text-slate-500 hover:text-slate-700 hover:bg-slate-50'" class="px-6 py-3 border-b-2 font-bold text-sm transition-all whitespace-nowrap rounded-t-lg ml-auto">
+                    <i class="fa-solid fa-pen-to-square mr-2"></i> 탐구 학습지
+                </button>
+            </div>
+
+            <div class="flex-grow">
+                <!-- Tab 1: Concept -->
+                <div x-show="activeTab === 'concept'" class="content-scroll no-print">
+                    <div class="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                        <h3 class="text-xl font-bold text-slate-800 mb-4 flex items-center gap-2"><i class="fa-solid fa-bullseye text-indigo-600"></i> 학습 목표</h3>
+                        <p class="text-slate-700 font-bold text-lg bg-slate-50 p-4 rounded-xl border border-slate-200" x-text="safeLessonDetail.explanation.target"></p>
+                    </div>
+                    <div class="space-y-4">
+                        <template x-for="(step, index) in safeLessonDetail.explanation.steps" :key="index">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex gap-4 items-start">
+                                <div class="w-10 h-10 rounded-full bg-indigo-100 text-indigo-700 font-black flex items-center justify-center flex-shrink-0 mt-1 border border-indigo-200" x-text="index + 1"></div>
+                                <div>
+                                    <h4 class="text-lg font-bold text-slate-800 mb-2" x-text="step.title"></h4>
+                                    <p class="text-slate-600 font-medium leading-relaxed" x-text="step.desc"></p>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Tab 2: Caution (Support HTML for Rich text like Citation list) -->
+                <div x-show="activeTab === 'caution'" style="display: none;" class="content-scroll no-print">
+                    <div class="bg-rose-50 border border-rose-200 p-8 rounded-2xl shadow-sm">
+                        <div class="flex items-center gap-3 mb-5 text-rose-700 border-b border-rose-200 pb-4">
+                            <i class="fa-solid fa-triangle-exclamation text-2xl"></i>
+                            <h3 class="text-xl font-bold" x-text="safeLessonDetail.caution.target"></h3>
+                        </div>
+                        <div class="text-slate-800 font-medium text-base leading-relaxed bg-white/70 p-6 rounded-xl border border-rose-100" x-html="safeLessonDetail.caution.content"></div>
+                    </div>
+                </div>
+
+                <!-- Tab 3: Activity -->
+                <div x-show="activeTab === 'activity'" style="display: none;" class="content-scroll no-print">
+                    <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm mb-6">
+                        <h3 class="text-lg font-bold text-slate-800 flex items-center gap-2"><i class="fa-solid fa-flag-checkered text-emerald-600"></i> 오늘의 미션</h3>
+                        <p class="text-slate-700 mt-2 font-bold" x-text="safeLessonDetail.activity.target"></p>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <template x-for="(step, index) in safeLessonDetail.activity.steps" :key="index">
+                            <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm relative overflow-hidden">
+                                <div class="absolute left-0 top-0 bottom-0 w-1.5 bg-emerald-500"></div>
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
+                                    <h4 class="text-lg font-bold text-slate-800 flex items-center gap-2">
+                                        <span class="text-emerald-600 font-black" x-text="'Activity ' + (index + 1) + '.'"></span>
+                                        <span x-text="step.title"></span>
+                                    </h4>
+                                    <div class="flex items-center gap-3">
+                                        <!-- 인쇄 버튼 (무조건 노출되도록 조건 수정) -->
+                                        <button x-show="step.hasWorksheetButton && safeLessonDetail.hasWorksheet" @click="activeTab = 'worksheet'; setTimeout(printWorksheet, 300)" class="px-4 py-2 bg-amber-100 hover:bg-amber-200 text-amber-800 text-sm font-bold rounded-lg transition-colors border border-amber-300 shadow-sm flex items-center gap-2">
+                                            <i class="fa-solid fa-print"></i> PDF 인쇄
+                                        </button>
+                                        <span class="px-3 py-1.5 bg-slate-100 text-slate-700 text-xs font-bold rounded-lg border border-slate-200" x-text="step.time"></span>
+                                    </div>
+                                </div>
+                                <p class="text-slate-600 font-medium leading-relaxed text-base" x-text="step.desc"></p>
+                                
+                                <!-- Worksheet Guide -->
+                                <div x-show="step.hasWorksheetButton && safeLessonDetail.hasWorksheet" class="mt-5 p-4 bg-emerald-50 border border-emerald-200 rounded-xl flex flex-col sm:flex-row items-center justify-between gap-4">
+                                    <div class="flex items-center gap-3 text-emerald-800">
+                                        <i class="fa-solid fa-circle-info text-xl"></i>
+                                        <span class="font-medium text-sm">활동 후 상단의 <strong class="font-bold">탐구 학습지</strong> 탭으로 이동하여 결과를 정리하고 인쇄하세요.</span>
+                                    </div>
+                                    <button @click="activeTab = 'worksheet'" class="whitespace-nowrap px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-lg transition-colors shadow-sm">
+                                        학습지 작성하기 <i class="fa-solid fa-arrow-right ml-1"></i>
+                                    </button>
+                                </div>
+
+                                <!-- Fake News Toggle (Safe fallback) -->
+                                <div x-show="step.hasFakeNewsAnswer" class="mt-5">
+                                    <button @click="showFakeNewsAnswer = !showFakeNewsAnswer" class="w-full px-4 py-3 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-sm font-bold rounded-xl transition-colors shadow-sm flex items-center justify-center gap-2">
+                                        <i class="fa-solid" :class="showFakeNewsAnswer ? 'fa-eye-slash' : 'fa-eye'"></i> 
+                                        <span x-text="showFakeNewsAnswer ? '교사 예시 답안 숨기기' : '교사 예시 답안 보기 (클릭)'"></span>
+                                    </button>
+                                    
+                                    <div x-show="showFakeNewsAnswer" class="mt-4 border-2 border-indigo-100 rounded-xl overflow-hidden p-2 bg-white">
+                                        <img src="스크린샷 2026-09-07 090016.jpg" alt="가짜뉴스 식별법 인포그래픽" class="w-full h-auto rounded-lg border border-slate-200" onerror="this.onerror=null; this.src='https://placehold.co/800x600/f8fafc/64748b?text=Image+Not+Found+(Check+Filename)';">
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
+                    </div>
+                </div>
+
+                <!-- Tab 4: Worksheet -->
+                <div x-show="activeTab === 'worksheet' && safeLessonDetail.hasWorksheet" style="display: none;" class="w-full bg-white sm:shadow-lg sm:border border-slate-200 rounded-none sm:rounded-2xl p-0 sm:p-10 mx-auto print-full-width">
+                    
+                    <div class="mb-8 flex justify-between items-center bg-slate-50 p-4 rounded-xl border border-slate-200 no-print">
+                        <div class="text-sm text-slate-700 font-bold"><i class="fa-solid fa-circle-info mr-1 text-indigo-600"></i> 빈칸을 모두 채운 후 우측의 인쇄 버튼을 클릭하세요. (A4 자동 맞춤)</div>
+                        <button @click="printWorksheet" class="px-6 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-lg shadow-sm transition-colors flex items-center gap-2 border border-indigo-700">
+                            <i class="fa-solid fa-print"></i> 인쇄 / PDF 저장
+                        </button>
+                    </div>
+
+                    <!-- Printable A4 Area -->
+                    <div id="printable-worksheet" class="print-full-width bg-white">
+                        <div class="max-w-[800px] mx-auto pb-10">
+                            
+                            <!-- Header & Student Info -->
+                            <div class="flex flex-col md:flex-row justify-between items-start md:items-end border border-slate-300 border-l-4 border-l-indigo-600 p-6 rounded-xl mb-6 bg-white gap-4 shadow-sm">
+                                <div>
+                                    <div class="text-sm font-bold text-indigo-600 mb-1" x-text="currentLesson ? currentLesson.time : ''"></div>
+                                    <h2 class="text-2xl font-black text-slate-900 leading-tight" x-text="currentLesson ? currentLesson.title : ''"></h2>
+                                    <p class="text-slate-500 font-bold text-sm mt-2 tracking-wide">대구일중학교 2026 자유학기 주제선택 활동</p>
+                                </div>
+                                
+                                <!-- Expanded Info Area -->
+                                <div class="bg-slate-50 border border-slate-300 p-4 rounded-xl w-full md:w-auto text-sm font-bold text-slate-700 min-w-[300px]">
+                                    <div class="flex flex-col gap-3">
+                                        <div class="flex items-center justify-between gap-2">
+                                            <span class="bg-slate-200 px-2 py-0.5 rounded text-slate-600 text-xs">1학년</span>
+                                            <div class="flex items-center gap-1"><input type="text" class="w-8 border-b-2 border-slate-400 bg-transparent text-center focus:outline-none focus:border-indigo-600 font-bold">반</div>
+                                            <div class="flex items-center gap-1"><input type="text" class="w-8 border-b-2 border-slate-400 bg-transparent text-center focus:outline-none focus:border-indigo-600 font-bold">번</div>
+                                            <div class="flex items-center gap-1 ml-2">이름: <input type="text" class="w-16 border-b-2 border-slate-400 bg-transparent text-center focus:outline-none focus:border-indigo-600 font-bold"></div>
+                                        </div>
+                                        <div class="flex items-center justify-between gap-2 border-t border-slate-200 pt-2">
+                                            <div class="flex items-center gap-1">모둠명: <input type="text" class="w-16 border-b-2 border-slate-400 bg-transparent text-center focus:outline-none focus:border-indigo-600 font-bold"></div>
+                                            <div class="flex items-center gap-1 ml-2 flex-grow">역할: <input type="text" class="w-full border-b-2 border-slate-400 bg-transparent text-center focus:outline-none focus:border-indigo-600 font-bold"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Common Question (학기 관통 단어 삭제됨) -->
+                            <div class="mb-8 p-5 bg-slate-50 border border-slate-200 rounded-xl shadow-sm">
+                                <h3 class="text-sm font-bold text-slate-700 mb-2 flex items-center gap-2"><i class="fa-solid fa-flag text-indigo-600"></i> 핵심 탐구 질문</h3>
+                                <p class="text-slate-900 font-black text-lg">"글쓰기는 어떠한 방식으로 공동체 구성원을 연결하는가?"</p>
+                            </div>
+
+                            <div class="space-y-8">
+                                <template x-for="(q, index) in safeLessonDetail.worksheet.questions" :key="index">
+                                    <div class="page-break-inside-avoid">
+                                        <label class="block text-lg font-black text-slate-800 mb-3 border-b border-slate-200 pb-2">
+                                            <span class="text-indigo-600 mr-1" x-text="(index + 1) + '.'"></span> <span x-text="q.q"></span>
+                                        </label>
+                                        
+                                        <!-- Text Area -->
+                                        <template x-if="q.type === 'text'">
+                                            <textarea class="auto-resize w-full border border-slate-300 rounded-xl p-5 text-slate-800 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition shadow-inner text-base font-medium leading-relaxed bg-slate-50 hover:bg-white" 
+                                                      :rows="q.rows || 14" 
+                                                      :placeholder="q.placeholder || '자유롭게 생각을 적어보세요...'"
+                                                      oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea>
+                                        </template>
+
+                                        <!-- Basic Group Table (for Lesson 5-6) -->
+                                        <template x-if="q.type === 'table'">
+                                            <div class="overflow-x-auto border border-slate-300 rounded-xl shadow-sm bg-white">
+                                                <table class="w-full text-sm text-left text-slate-800">
+                                                    <thead class="text-sm font-black text-slate-700 bg-slate-100 border-b border-slate-300">
+                                                        <tr>
+                                                            <th scope="col" class="px-3 py-4 w-24 text-center border-r border-slate-300">모둠원 이름</th>
+                                                            <th scope="col" class="px-4 py-4 w-1/4 border-r border-slate-300">탐구 주제</th>
+                                                            <th scope="col" class="px-4 py-4 w-1/3 border-r border-slate-300">검색 자료 내용 요약</th>
+                                                            <th scope="col" class="px-4 py-4 w-1/4">검토 의견 (3대 기준)</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <template x-for="i in 6" :key="i">
+                                                            <tr class="bg-white border-b border-slate-300 last:border-b-0 hover:bg-slate-50 transition-colors">
+                                                                <td class="p-0 border-r border-slate-300"><textarea class="auto-resize w-full h-full min-h-[80px] p-3 border-none focus:ring-0 bg-transparent text-center font-bold" placeholder="이름" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                                <td class="p-0 border-r border-slate-300"><textarea class="auto-resize w-full h-full min-h-[80px] p-3 border-none focus:ring-0 bg-transparent font-medium" placeholder="주제 입력" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                                <td class="p-0 border-r border-slate-300"><textarea class="auto-resize w-full h-full min-h-[80px] p-3 border-none focus:ring-0 bg-transparent font-medium" placeholder="내용 요약" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                                <td class="p-0"><textarea class="auto-resize w-full h-full min-h-[80px] p-3 border-none focus:ring-0 bg-transparent font-medium" placeholder="의견" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                            </tr>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </template>
+
+                                        <!-- Fake News Table (for Lesson 7-8) -->
+                                        <template x-if="q.type === 'table_fakenews'">
+                                            <div class="overflow-x-auto border border-slate-300 rounded-xl shadow-sm bg-white">
+                                                <table class="w-full text-sm text-left text-slate-800">
+                                                    <thead class="text-sm font-black text-slate-700 bg-slate-100 border-b border-slate-300">
+                                                        <tr>
+                                                            <th scope="col" class="px-2 py-4 w-12 text-center border-r border-slate-300">연번</th>
+                                                            <th scope="col" class="px-4 py-4 w-5/12 border-r border-slate-300">검색한 가짜뉴스 사례 (내용 요약)</th>
+                                                            <th scope="col" class="px-4 py-4 w-6/12">발생한 폐해 및 부정적 영향</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        <template x-for="i in 3" :key="i">
+                                                            <tr class="bg-white border-b border-slate-300 last:border-b-0 hover:bg-slate-50 transition-colors">
+                                                                <td class="p-0 border-r border-slate-300 text-center font-black text-slate-500 bg-slate-50" x-text="i"></td>
+                                                                <td class="p-0 border-r border-slate-300"><textarea class="auto-resize w-full h-full min-h-[160px] p-4 border-none focus:ring-0 bg-transparent text-base font-medium leading-relaxed" placeholder="가짜뉴스 내용을 구체적으로 요약해주세요." oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                                <td class="p-0"><textarea class="auto-resize w-full h-full min-h-[160px] p-4 border-none focus:ring-0 bg-transparent text-base font-medium leading-relaxed" placeholder="이 뉴스로 인해 어떤 심각한 문제가 발생했나요?" oninput="this.style.height = ''; this.style.height = this.scrollHeight + 'px'"></textarea></td>
+                                                            </tr>
+                                                        </template>
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </template>
+                                    </div>
+                                </template>
+                            </div>
+
+                            <!-- Teacher Approval Box -->
+                            <div x-show="safeLessonDetail.worksheet.isSubmissionLesson" class="mt-12 p-6 border-2 border-indigo-600 rounded-xl bg-indigo-50/30 page-break-inside-avoid shadow-sm">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <h3 class="text-lg font-black text-indigo-700 mb-1">교사 피드백 및 탐구 주제 승인란</h3>
+                                        <p class="text-sm text-slate-600 font-bold">위 탐구 주제가 3대 요건(구체성, 글쓰기 가능성, 실현 가능성)을 충족하였음을 확인하고 승인합니다.</p>
+                                    </div>
+                                    <div class="text-right flex gap-5 items-end">
+                                        <div class="text-sm font-bold text-slate-700">확인 일자: 2026 . &nbsp;&nbsp;&nbsp; . &nbsp;&nbsp;&nbsp; .</div>
+                                        <div class="text-sm font-bold text-slate-700">지도 교사: <span class="inline-block w-24 border-b border-slate-400"></span> (인/서명)</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Appendix: Citation Guide (Forces page break on print) -->
+                            <div x-show="safeLessonDetail.worksheet.showCitationGuide" class="mt-12 pt-8" style="page-break-before: always;">
+                                <div class="p-8 border-2 border-slate-300 rounded-xl bg-white shadow-sm">
+                                    <div class="flex items-center gap-3 mb-6 border-b border-slate-200 pb-4">
+                                        <i class="fa-solid fa-book-bookmark text-3xl text-indigo-600"></i>
+                                        <h3 class="text-2xl font-black text-slate-800">부록: 올바른 자료 출처 표기법 가이드</h3>
+                                    </div>
+                                    <div class="text-slate-800 font-medium text-base leading-loose bg-slate-50 p-8 rounded-xl border border-slate-200" x-html="safeLessonDetail.caution.content"></div>
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <script>
+        function appData() {
+            return {
+                currentView: 'dashboard',
+                filterGroup: 'all',
+                currentLessonId: null,
+                activeTab: 'concept',
+                showFakeNewsAnswer: false,
+                currentQuoteIndex: 0,
+                
+                quotes: [
+                    {text: "우리가 하는 작은 행동들이 모여 큰 변화를 만듭니다.", author: "헬렌 켈러", point: "실천의 중요성"},
+                    {text: "성공은 매일 반복되는 작은 노력들의 합입니다.", author: "로버트 콜리어", point: "꾸준함"},
+                    {text: "타인을 이해하려면 먼저 그의 입장이 되어보아야 합니다.", author: "하퍼 리 (앵무새 죽이기)", point: "공감"},
+                    {text: "비판은 쉽게 할 수 있지만, 대안을 제시하는 것은 용기가 필요합니다.", author: "존 F. 케네디", point: "책임감"},
+                    {text: "가장 위대한 소통은 상대방이 하지 않은 말을 듣는 것입니다.", author: "피터 드러커", point: "경청"},
+                    {text: "실패는 다시 시작할 수 있는 기회일 뿐입니다.", author: "헨리 포드", point: "회복탄력성"},
+                    {text: "세상에서 가장 아름다운 것은 우리가 함께 만들어가는 조화입니다.", author: "마더 테레사", point: "협동"},
+                    {text: "진실은 언제나 단순하지만, 그것을 실천하기는 어렵습니다.", author: "톨스토이", point: "정직"},
+                    {text: "자신의 생각을 명확하게 표현할 줄 아는 사람이 세상을 바꿉니다.", author: "윈스턴 처칠", point: "표현력"},
+                    {text: "우리가 겪는 모든 문제는 해결책을 품고 있습니다.", author: "알베르 카뮈", point: "긍정적 사고"},
+                    {text: "다른 사람의 의견을 존중하는 것이 진정한 지성입니다.", author: "아리스토텔레스", point: "존중"},
+                    {text: "지식은 나누면 나눌수록 커집니다.", author: "탈무드", point: "나눔"},
+                    {text: "글쓰기는 나 자신과 대화하는 가장 좋은 방법입니다.", author: "앤 프랭크", point: "성찰"},
+                    {text: "모든 위대한 아이디어는 처음에는 불가능해 보입니다.", author: "알베르트 아인슈타인", point: "창의성"},
+                    {text: "세상을 변화시키고 싶다면 자신부터 변화하십시오.", author: "마하트마 간디", point: "자기 변화"},
+                    {text: "말은 마음의 초상화입니다.", author: "존 레이", point: "언어 예절"},
+                    {text: "진정한 리더는 길을 보여주고 함께 걷는 사람입니다.", author: "존 맥스웰", point: "리더십"},
+                    {text: "우리의 한계는 우리가 스스로 설정한 것일 뿐입니다.", author: "나폴레옹 힐", point: "도전"},
+                    {text: "배움은 평생 이어지는 여정입니다.", author: "공자", point: "학습 태도"},
+                    {text: "작은 친절이 세상을 따뜻하게 만듭니다.", author: "이솝", point: "친절"},
+                    {text: "질문하는 것을 두려워하지 마십시오.", author: "소크라테스", point: "탐구심"},
+                    {text: "진정한 지혜는 자신이 무엇을 모르는지 아는 것입니다.", author: "소크라테스", point: "겸손"},
+                    {text: "독서는 마음의 양식입니다.", author: "르네 데카르트", point: "독서의 가치"},
+                    {text: "행동 없는 생각은 망상에 불과합니다.", author: "미겔 데 세르반테스", point: "실행력"},
+                    {text: "타인의 결점을 찾기 전에 자신의 모습을 돌아보세요.", author: "법정 스님", point: "자기 반성"},
+                    {text: "어려움 속에서 진정한 기회가 숨어 있습니다.", author: "아인슈타인", point: "위기 극복"},
+                    {text: "끈기는 천재성을 이깁니다.", author: "캘빈 쿨리지", point: "인내심"},
+                    {text: "약속을 지키는 것은 신뢰의 첫걸음입니다.", author: "벤자민 프랭클린", point: "신뢰"},
+                    {text: "유머는 관계의 윤활유입니다.", author: "빅터 프랭클", point: "여유"},
+                    {text: "자연을 사랑하는 마음이 인간을 사랑하는 마음입니다.", author: "레이첼 카슨", point: "생태 감수성"},
+                    {text: "다름을 인정할 때 비로소 평화가 시작됩니다.", author: "넬슨 만델라", point: "포용"},
+                    {text: "감사하는 마음이 가장 큰 행복입니다.", author: "오프라 윈프리", point: "감사"},
+                    {text: "시간의 소중함을 아는 자가 인생을 주도합니다.", author: "괴테", point: "시간 관리"},
+                    {text: "우리의 글이 누군가에게 희망이 되길 바랍니다.", author: "작자 미상", point: "선한 영향력"}
+                ],
+
+                lessons: [
+                    { id: 1, group: '1', time: '1-2차시', title: '우리는 무엇을 배울까? 자유학기 활동 오리엔테이션', tasks: ['자유학기 활동 목적 이해', '수업 규칙과 평가 방법 공유', '친구들과 아이스브레이킹'] },
+                    { id: 2, group: '1', time: '3-4차시', title: '나의 주변 둘러보기 - 문제의식 가지기', tasks: ['일상에서 불편한 점 찾기', '사회 문제에 대한 기사 읽기', '내가 관심 있는 문제 3가지 브레인스토밍'] },
+                    { id: 3, group: '1', time: '5-6차시', title: '함께 해결할 문제 정하기 - 주제 선정 및 팀 구성', tasks: ['관심사가 비슷한 친구들과 모둠 편성', '주제 선정 3대 요건에 맞는 최종 주제 확정', '모둠 역할 분담 및 활동 계획 세우기'] },
+                    { id: 4, group: '2', time: '7-8차시', title: '진짜 정보 찾기 - 올바른 정보 탐색법과 신뢰도 평가', tasks: ['가짜 뉴스 사례 검색 및 폐해 토의', '나만의 가짜 뉴스 판별법 만들기', '교사 예시(인포그래픽)와 비교하기'] },
+                    { id: 5, group: '2', time: '9-10차시', title: '핵심 단어로 검색하기 - 탐구 주제 관련 키워드 설정', tasks: ['탐구 주제에서 핵심 키워드 뽑아내기', '다양한 매체(책, 기사, 논문)에서 자료 찾기', '찾은 자료의 출처 기록하기'] },
+                    { id: 6, group: '2', time: '11-12차시', title: '찾은 자료 정리하기 - 정보의 구조화 및 시각화', tasks: ['포스트잇을 활용한 자료 분류(유목화)', '기준에 따라 정보 묶기', '우리 모둠만의 자료 구조도 그리기'] },
+                    { id: 7, group: '2', time: '13-14차시', title: '원인 파악과 대안 모색 - 문제 해결을 위한 깊이 있는 사고', tasks: ['현상의 표면적 원인과 근본적 원인 구분', '실현 가능한 해결책 아이디어 내기', '대안의 장단점 분석하기'] },
+                    { id: 8, group: '3', time: '15-16차시', title: '글의 뼈대 세우기 - 서론, 본론, 결론의 역할', tasks: ['논리적인 글의 3단 구조 이해하기', '우수 보고서 예시 분석하기', '각 단락에 들어가야 할 필수 요소 파악'] },
+                    { id: 9, group: '3', time: '17-18차시', title: '설계도 완성하기 - 보고서 개요 작성 및 논리 점검', tasks: ['주제문 작성하기', '목차 구성하기', '자료와 주장의 논리적 연결성 점검'] },
+                    { id: 10, group: '3', time: '19-20차시', title: '생각을 글로 펼치기 1 - 초고 작성의 시작', tasks: ['독자를 고려하며 글쓰기 시작하기', '서론 쓰기 (문제 제기)', '본론 쓰기 (원인 분석 및 자료 인용)'] },
+                    { id: 11, group: '3', time: '21-22차시', title: '생각을 글로 펼치기 2 - 결론 쓰기와 1차 퇴고', tasks: ['결론 쓰기 (대안 제시 및 요약)', '모둠원 간 상호 읽기 (동료 평가)', '피드백을 바탕으로 1차 수정'] },
+                    { id: 12, group: '3', time: '23-24차시', title: '글 다듬기 - AI를 활용한 윤리적 맞춤법 교정 및 최종 탈고', tasks: ['AI 도구를 활용하여 맞춤법/문맥 교정', 'AI가 준 결과를 비판적으로 수용하기', '최종 보고서 완성 및 제출'] },
+                    { id: 13, group: '4', time: '25-26차시', title: '시각 자료 기획 - 전달력 높은 프레젠테이션 설계', tasks: ['핵심 내용을 슬라이드별로 나누기', '텍스트 최소화 및 시각화 아이디어 내기', '스토리보드 스케치하기'] },
+                    { id: 14, group: '4', time: '27-28차시', title: '시각 자료 제작 - 디자인 도구 활용하기', tasks: ['미리캔버스 등 디자인 도구 기본 익히기', '모둠별 프레젠테이션 자료 제작', '저작권에 위배되지 않는 이미지 사용'] },
+                    { id: 15, group: '4', time: '29-30차시', title: '자신감 있게 말하기 - 비언어적 표현과 리허설', tasks: ['시선 처리, 목소리 크기, 제스처 연습', '대본 없이 핵심어 위주로 말하기', '모둠별 모의 발표 및 피드백'] },
+                    { id: 16, group: '4', time: '31-32차시', title: '세상을 향해 외치다 - 나눔 및 발표회', tasks: ['최종 발표 진행', '다른 모둠의 발표 경청 및 질의응답', '상호 평가하기'] },
+                    { id: 17, group: '4', time: '33-34차시', title: '나의 발자취 돌아보기 - 포트폴리오 및 자기 성찰', tasks: ['한 학기 활동 포트폴리오 정리', '나의 성장과 한계점 성찰지 작성', '마무리 및 수료 축하'] }
+                ],
+
+                lessonDetails: {
+                    1: { hasWorksheet: true, explanation: { target: '자유학기 활동의 목적 이해', steps: [{title: '자유학기제란?', desc: '자신의 꿈과 끼를 찾기 위해 참여하는 학기입니다.'}] }, caution: { target: '참여 윤리', content: '적극적으로 참여하며 무임승차를 하지 않습니다.' }, activity: { target: '마음 열기', steps: [{title: '아이스브레이킹', time: '60분', desc: '친구들과 관심사를 나눕니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '자유학기 동안 해보고 싶은 활동은 무엇인가요?', type: 'text', rows: 14}] } },
+                    2: { hasWorksheet: true, explanation: { target: '문제의식 가지기', steps: [{title: '문제 발견', desc: '일상의 불편함이 탐구 주제가 됩니다.'}] }, caution: { target: '주의점', content: '개인적인 불만을 사회적 문제로 포장하지 않도록 주의합니다.' }, activity: { target: '주제 브레인스토밍', steps: [{title: '문제 탐색', time: '60분', desc: '자신이 관심 있는 문제 3가지를 찾습니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '주변에서 발견한 문제 현상 3가지를 구체적으로 적어보세요.', type: 'text', rows: 14}] } },
+                    
+                    // ID 3 (5-6차시) - 모둠원 테이블 적용
+                    3: {
+                        hasWorksheet: true,
+                        explanation: { target: '탐구 주제 선정의 3대 조건 이해', steps: [{title: '1. 구체성과 범위', desc: '구체적이고 명확한 주제를 정해야 합니다.'}, {title: '2. 자료수집 가능성', desc: '중학생 수준에서 자료를 수집하고 분석할 수 있어야 합니다.'}, {title: '3. 실현 가능성', desc: '현실적으로 실천 가능한 대안을 도출할 수 있어야 합니다.'}] },
+                        caution: { target: '상호 존중', content: '모둠원의 의견을 비판하기 전에 먼저 끝까지 경청하는 태도를 가집니다.' },
+                        activity: { target: '모둠 탐구 주제 최종 확정', steps: [{title: '모둠 편성 및 공유', time: '20분', desc: '개인별로 생각한 탐구 주제를 모둠원들과 공유합니다.'}, {title: '주제 확정 토의', time: '25분', desc: '3대 조건에 부합하는 가장 좋은 1개의 주제를 투표와 토론을 통해 정합니다.'}, {title: '학습지 작성 및 교사 승인', time: '15분', desc: '모둠원들의 논의 결과를 학습지에 꼼꼼히 작성한 후 교사에게 제출하여 승인을 받습니다.', hasWorksheetButton: true}] },
+                        worksheet: { isSubmissionLesson: true, questions: [{q: '모둠원 개인별 탐구 문제 공유 내용 및 의견 요약', type: 'table'}, {q: '우리 모둠의 최종 탐구 주제와 그렇게 선정한 이유는 무엇인가요?', type: 'text', rows: 10}] }
+                    },
+
+                    // ID 4 (7-8차시) - 완전 복구! 가짜뉴스 테이블 및 이미지 토글 버튼 적용
+                    4: {
+                        hasWorksheet: true,
+                        explanation: { target: '가짜뉴스의 위험성과 판별법 이해', steps: [{title: '가짜뉴스란?', desc: '의도적으로 조작되거나 허위로 작성된 기사 및 정보를 의미합니다.'}, {title: '비판적 사고', desc: '정보를 그대로 믿지 않고 출처와 논리를 의심하는 태도가 필요합니다.'}] },
+                        caution: { target: '정보 윤리', content: '확인되지 않은 뉴스를 친구들에게 전달(공유)하는 행위 자체도 심각한 정보 윤리 위반이 될 수 있습니다.' },
+                        activity: { target: '가짜뉴스 분석 및 판별법 만들기', steps: [{title: '사례 검색', time: '20분', desc: '최근 사회적 문제가 되었던 가짜뉴스 사례를 조별로 검색합니다.'}, {title: '판별 기준 만들기', time: '25분', desc: '진짜와 가짜를 구별할 수 있는 우리 모둠만의 3가지 기준을 세워봅니다.'}, {title: '교사 예시와 비교', time: '15분', desc: '아래 교사가 제시한 인포그래픽(판별법)과 우리가 만든 기준을 비교해 보고 학습지를 완성합니다.', hasWorksheetButton: true, hasFakeNewsAnswer: true}] },
+                        worksheet: { isSubmissionLesson: false, questions: [{q: '모둠에서 조사한 가짜뉴스 사례와 그로 인해 발생한 피해를 요약해보세요.', type: 'table_fakenews'}] }
+                    },
+
+                    // ID 5 (9-10차시) - 출처 표기법 (HTML 리스트) 및 부록 페이지 적용
+                    5: {
+                        hasWorksheet: true,
+                        explanation: { 
+                            target: '검색의 질을 높이는 핵심 키워드 추출법과 교차 검증', 
+                            steps: [
+                                {title: '1. 주제어 쪼개기 (명사 중심)', desc: '예) "청소년 스마트폰 중독 해결방안" ➔ [청소년], [스마트폰], [중독], [해결]로 단어를 쪼개어 검색의 뼈대를 만듭니다.'},
+                                {title: '2. 유의어 및 확장어 찾기 (★핵심)', desc: '단순히 하나의 단어로만 검색하면 좋은 자료를 놓칩니다. 예) [스마트폰] ➔ 디지털 기기, 모바일 / [중독] ➔ 과의존, 과몰입 등으로 확장해보세요.'},
+                                {title: '3. 검색 연산자(특수기호) 활용 꿀팁', desc: '정확히 일치하는 문장을 찾을 땐 큰따옴표("스마트폰 과의존")를, 특정 단어를 제외할 땐 빼기 기호(스마트폰 -광고)를 사용하세요.'},
+                                {title: '4. 교차 검증(Cross-Validation)으로 팩트 체크', desc: '하나의 자료만 맹신하지 마세요. 예) 블로그에서 "커피가 키 성장을 막는다"는 글을 봤다면? ➔ 기상청, 대학병원 칼럼, 뉴스 기사 등 2~3개의 공신력 있는 매체를 추가 검색하여 사실을 대조하는 과정이 필수입니다.'}
+                            ] 
+                        },
+                        caution: { 
+                            target: '다양한 매체별 올바른 출처 표기법 (10가지 예시)', 
+                            content: `자료를 발췌할 때는 반드시 출처를 명확히 기록하여 저작권을 존중해야 합니다. 아래 매체별 표기법을 참고하세요.<br><br>
+                            <ul class="space-y-4 text-base ml-4 list-disc marker:text-rose-500">
+                                <li><strong>단행본(책):</strong> 저자명, 『책 제목』, 출판사, 출판연도, 인용 면수. <br><span class="text-slate-500 text-sm font-normal">예: 홍길동, 『스마트폰 중독의 이해』, 대구출판, 2026, 45쪽.</span></li>
+                                <li><strong>번역서:</strong> 원저자명, 『책 제목』, 번역자명, 출판사, 출판연도. <br><span class="text-slate-500 text-sm font-normal">예: 앨빈 토플러, 『제3의 물결』, 원창연 역, 홍지미디어, 2006.</span></li>
+                                <li><strong>신문 기사:</strong> 기자명, "기사 제목", 「신문사명」, 발행일자, URL. <br><span class="text-slate-500 text-sm font-normal">예: 김철수, "디지털 소외계층 문제", 「대구일보」, 2026.05.12, http://...</span></li>
+                                <li><strong>학술 논문:</strong> 저자명, 「논문 제목」, 『학술지명』 권호, 발행기관, 발행연도. <br><span class="text-slate-500 text-sm font-normal">예: 이영희, 「중학생 미디어 리터러시 향상」, 『교육학연구』 12(3), 교육학회, 2025.</span></li>
+                                <li><strong>웹사이트 및 블로그:</strong> 작성자(또는 기관명), "게시글 제목", 사이트명, 작성일자, URL (검색일자). <br><span class="text-slate-500 text-sm font-normal">예: 사이버경찰청, "사이버 폭력 예방", 경찰청 블로그, 2026.01.15, http://... (2026.09.14 검색)</span></li>
+                                <li><strong>온라인 동영상(유튜브 등):</strong> 채널명(제작자), "영상 제목", 플랫폼명, 게시일자, URL. <br><span class="text-slate-500 text-sm font-normal">예: 지식채널e, "가짜뉴스의 알고리즘", 유튜브, 2024.11.20, http://...</span></li>
+                                <li><strong>전문가 인터뷰:</strong> 면담자 이름, 직위(소속), 면담 날짜 및 방식. <br><span class="text-slate-500 text-sm font-normal">예: 박지훈, 대구일중학교 진로상담교사, 2026.09.10, 대면 인터뷰</span></li>
+                            </ul>` 
+                        },
+                        activity: { 
+                            target: '우리 모둠만의 핵심 키워드 마인드맵을 만들고 실전 검색하기', 
+                            steps: [
+                                {title: '키워드 마인드맵 그리기', time: '20분', desc: '탐구 주제에서 핵심 명사를 뽑아내고, 모둠원들과 유의어와 확장어를 덧붙여 풍성한 키워드 지도를 만듭니다.'},
+                                {title: '실전 검색 및 교차 검증', time: '25분', desc: '각자 다양한 검색어 조합을 활용하여 자료를 찾고, 내용이 사실인지 교차 검증을 수행합니다.'},
+                                {title: '자료 출처 및 내용 요약', time: '15분', desc: '가장 유용한 핵심 자료를 엄선하여 학습지에 출처와 요약을 기록합니다.', hasWorksheetButton: true}
+                            ]
+                        },
+                        worksheet: { 
+                            isSubmissionLesson: false, 
+                            showCitationGuide: true,
+                            questions: [
+                                {q: '우리 모둠의 탐구 주제에서 도출한 핵심 키워드와 확장어(유의어) 5가지 이상', type: 'text', rows: 5, placeholder: '예시: 디지털 소외계층, 키오스크, 노인, 정보 격차, 디지털 리터러시 등'}, 
+                                {q: '자료 검색 시 가장 효과적이었던 나만의 검색어 조합은 무엇인가요?', type: 'text', rows: 3, placeholder: '예시: 노인 + "키오스크 교육" -광고'},
+                                {q: '검색하여 찾은 유용한 핵심 자료 2가지 (정확한 출처 표기법 적용 및 요약)', type: 'text', rows: 14, placeholder: '1. 자료 제목:\n- 출처:\n- 요약 내용:\n\n2. 자료 제목:\n- 출처:\n- 요약 내용:'}
+                            ] 
+                        }
+                    },
+
+                    // Default dummy data for 6~17 to prevent crashes
+                    6: { hasWorksheet: true, explanation: { target: '자료 분류', steps: [{title: '분류 기준 설정', desc: '수집한 자료들의 공통점을 찾아 묶어봅니다.'}] }, caution: { target: '표절 주의', content: '자료를 복사해서 붙여넣지 않고 자신의 언어로 요약해야 합니다.' }, activity: { target: '자료 구조화', steps: [{title: '포스트잇 유목화', time: '60분', desc: '수집한 자료를 포스트잇에 적어 칠판에 분류합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '자료를 분류한 기준과 결과를 요약해보세요.', type: 'text', rows: 14}] } },
+                    7: { hasWorksheet: true, explanation: { target: '원인 분석', steps: [{title: '근본 원인 찾기', desc: '표면적 현상 너머의 진짜 원인을 깊게 탐구합니다.'}] }, caution: { target: '객관성 유지', content: '추측이 아닌 팩트와 수치에 기반하여 원인을 분석해야 합니다.' }, activity: { target: '대안 모색', steps: [{title: '해결방안 도출', time: '60분', desc: '분석된 원인을 제거할 수 있는 실질적 대안을 회의합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '문제의 핵심 원인과 모둠이 도출한 대안을 자세히 적어보세요.', type: 'text', rows: 14}] } },
+                    8: { hasWorksheet: true, explanation: { target: '글의 구조', steps: [{title: '3단 구성 이해', desc: '서론(문제제기) - 본론(분석) - 결론(대안)의 뼈대를 익힙니다.'}] }, caution: { target: '논리적 비약 금지', content: '앞뒤가 맞지 않는 무리한 주장 전개를 피합니다.' }, activity: { target: '구조도 그리기', steps: [{title: '우수 글 분석', time: '60분', desc: '선배들의 우수한 보고서를 읽고 문단 구조를 쪼개어 분석합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '서론, 본론, 결론에는 각각 어떤 내용이 들어가야 하는지 정리해보세요.', type: 'text', rows: 14}] } },
+                    9: { hasWorksheet: true, explanation: { target: '개요 작성', steps: [{title: '개요의 중요성', desc: '글을 쓰기 전 뼈대(목차)를 잡는 과정이 바로 개요입니다.'}] }, caution: { target: '일관성', content: '글이 산으로 가지 않도록 처음 정한 주제에서 벗어나지 않게 조율합니다.' }, activity: { target: '목차 만들기', steps: [{title: '우리 조 개요 뼈대 잡기', time: '60분', desc: '보고서의 목차와 문단별 핵심 문장을 작성합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '우리 모둠의 보고서 개요(목차와 주요 내용)를 완성해보세요.', type: 'text', rows: 14}] } },
+                    10:{ hasWorksheet: true, explanation: { target: '초고 작성', steps: [{title: '독자 고려하기', desc: '이 글을 읽는 사람(선생님, 친구)을 생각하며 쉽고 명확하게 씁니다.'}] }, caution: { target: '정확한 인용', content: '남의 글을 가져올 때는 반드시 따옴표와 출처를 명시합니다.' }, activity: { target: '서론과 본론 쓰기', steps: [{title: '거침없이 쓰기(초고)', time: '60분', desc: '문법에 얽매이지 않고 개요에 살을 붙여 글을 쭉 써내려 갑니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '글쓰기를 시작하면서 가장 막혔던 부분과 해결 과정은?', type: 'text', rows: 14}] } },
+                    11:{ hasWorksheet: true, explanation: { target: '퇴고의 기술', steps: [{title: '퇴고 원칙', desc: '글을 깎고 다듬어 문맥을 매끄럽게 만듭니다.'}] }, caution: { target: '상처 주지 않기', content: '친구의 글을 평가할 때는 비난이 아닌 건설적인 피드백을 줍니다.' }, activity: { target: '상호 평가(Peer Review)', steps: [{title: '동료 글 읽어주기', time: '60분', desc: '서로의 글을 읽고 보완할 점을 메모지에 적어 건네줍니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '친구의 피드백을 받고 수정한 부분은 어디인가요?', type: 'text', rows: 14}] } },
+                    12:{ hasWorksheet: true, explanation: { target: 'AI 활용 교정', steps: [{title: '맞춤법과 문맥 다듬기', desc: 'AI 도구를 활용해 오탈자를 잡고 어색한 문장을 교정합니다.'}] }, caution: { target: '맹신 금지', content: 'AI의 교정 결과가 100% 맞는 것은 아닙니다. 스스로 비판적으로 수용해야 합니다.' }, activity: { target: '최종 탈고 및 제출', steps: [{title: '보고서 완성', time: '60분', desc: '수정을 마친 최종 보고서를 깔끔하게 서식화하여 제출합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: 'AI 도구를 글쓰기에 활용해 본 소감과 장단점을 적어보세요.', type: 'text', rows: 14}] } },
+                    13:{ hasWorksheet: true, explanation: { target: '시각 자료 기획', steps: [{title: '스토리보드 작성', desc: 'PPT 슬라이드에 들어갈 핵심 내용과 그림을 스케치합니다.'}] }, caution: { target: '텍스트 과잉 금지', content: '발표 자료에 글씨를 너무 빽빽하게 채우지 않습니다.' }, activity: { target: '기획안 스케치', steps: [{title: '화면 설계', time: '60분', desc: '종이에 슬라이드 10장 분량의 스토리보드를 그립니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '발표 자료에서 가장 시각적으로 강조하고 싶은 부분은?', type: 'text', rows: 14}] } },
+                    14:{ hasWorksheet: true, explanation: { target: '슬라이드 제작 실습', steps: [{title: '디자인 통일성', desc: '색상과 폰트를 통일하여 깔끔하게 제작합니다.'}] }, caution: { target: '저작권 주의', content: '허락받지 않은 이미지나 폰트를 무단으로 사용하지 않습니다.' }, activity: { target: '디자인 툴 활용', steps: [{title: 'PPT 제작', time: '60분', desc: '미리캔버스 등의 툴을 활용하여 실제 프레젠테이션 자료를 만듭니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '프레젠테이션을 제작하며 새롭게 알게 된 기능이나 팁은?', type: 'text', rows: 14}] } },
+                    15:{ hasWorksheet: true, explanation: { target: '비언어적 표현', steps: [{title: '태도와 시선', desc: '바른 자세, 적절한 목소리 크기, 청중과의 눈맞춤이 중요합니다.'}] }, caution: { target: '대본 의존 금지', content: '종이나 화면만 보고 줄줄 읽는 발표는 피해야 합니다.' }, activity: { target: '발표 리허설', steps: [{title: '모의 발표', time: '60분', desc: '실전처럼 시간을 재며 모둠별로 발표 연습을 진행합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '리허설 후 자신이 보완해야 할 점은 무엇인가요?', type: 'text', rows: 14}] } },
+                    16:{ hasWorksheet: true, explanation: { target: '전달과 경청', steps: [{title: '발표의 목적', desc: '우리의 탐구 결과를 청중에게 설득력 있게 전달하는 것입니다.'}] }, caution: { target: '경청의 자세', content: '다른 조가 발표할 때는 잡담하지 않고 진지하게 듣습니다.' }, activity: { target: '나눔 및 발표회', steps: [{title: '최종 발표 진행', time: '60분', desc: '모든 모둠이 돌아가며 한 학기 동안의 탐구 결과를 발표합니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '다른 모둠의 발표 중 가장 인상 깊었던 점과 배운 점은?', type: 'text', rows: 14}] } },
+                    17:{ hasWorksheet: true, explanation: { target: '자기 성찰', steps: [{title: '성찰의 의미', desc: '활동을 되돌아보며 나의 성장과 부족했던 점을 깨닫는 과정입니다.'}] }, caution: { target: '솔직한 기록', content: '성공 경험뿐만 아니라 갈등이나 실패 경험도 훌륭한 배움입니다.' }, activity: { target: '포트폴리오 정리', steps: [{title: '자기 평가서 작성', time: '60분', desc: '한 학기 동안 모은 자료들을 파일에 정리하고 성찰지를 씁니다.', hasWorksheetButton: true}] }, worksheet: { isSubmissionLesson: false, questions: [{q: '이번 자유학기 탐구 활동을 통해 스스로 가장 크게 성장했다고 느끼는 부분은?', type: 'text', rows: 14}] } }
+                },
+
+                get filteredLessons() {
+                    if (this.filterGroup === 'all') return this.lessons;
+                    return this.lessons.filter(l => l.group === this.filterGroup);
+                },
+
+                get currentLesson() {
+                    return this.lessons.find(l => l.id === this.currentLessonId);
+                },
+
+                get safeLessonDetail() {
+                    const detail = this.lessonDetails[this.currentLessonId];
+                    if (detail) return detail;
+                    
+                    return {
+                        hasWorksheet: false,
+                        explanation: { target: '데이터를 준비 중입니다.', steps: [] },
+                        caution: { target: '안내', content: '데이터를 로드하는 중 오류가 발생했습니다.' },
+                        activity: { target: '준비 중', steps: [] },
+                        worksheet: { isSubmissionLesson: false, showCitationGuide: false, questions: [] }
+                    };
+                },
+
+                changeView(view) {
+                    this.currentView = view;
+                    if (view === 'dashboard') {
+                        this.currentLessonId = null;
+                        this.showFakeNewsAnswer = false; 
+                    }
+                },
+
+                enterLesson(id) {
+                    this.currentLessonId = id;
+                    this.activeTab = 'concept'; 
+                    this.showFakeNewsAnswer = false;
+                    this.changeView('lesson');
+                },
+
+                prevQuote() {
+                    this.currentQuoteIndex = (this.currentQuoteIndex - 1 + this.quotes.length) % this.quotes.length;
+                },
+
+                nextQuote() {
+                    this.currentQuoteIndex = (this.currentQuoteIndex + 1) % this.quotes.length;
+                },
+
+                printWorksheet() {
+                    const textareas = document.querySelectorAll('#printable-worksheet textarea');
+                    textareas.forEach(ta => {
+                        ta.style.height = 'auto';
+                        ta.style.height = ta.scrollHeight + 'px';
+                    });
+                    
+                    setTimeout(() => {
+                        window.print();
+                    }, 300);
+                }
+            }
+        }
+    </script>
+</body>
+</html>
